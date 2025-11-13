@@ -1,9 +1,7 @@
 package models
 
-type Product struct {
+type Category struct {
 	Base
 	Name        string
-	Price       float32
 	Description string
-	CategoryId  uint
 }
