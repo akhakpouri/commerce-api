@@ -1,0 +1,9 @@
+version: "2"
+linters:
+  enable:
+    - errcheck      # Error checking
+    - ineffassign   # Detect unused assignments
+    - unused        # Find unused variables
+    - govet         # Go vet tool
+    - staticcheck   # Static analysis
+    - unused
