@@ -1,6 +1,8 @@
 package models
 
 import (
+	"fmt"
+
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -14,6 +16,9 @@ func Connect() {
 	if err != nil {
 		panic("Failed to connect to the database")
 	}
-	database.AutoMigrate(&Product{})
+	err = database.AutoMigrate(&Product{})
+	if err != nil {
+		panic(fmt.Sprintf("Failed to migrate database, %v", err))
+	}
 	Db = database
 }
