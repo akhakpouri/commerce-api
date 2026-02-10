@@ -7,3 +7,7 @@ type Product struct {
 	Description string
 	CategoryId  uint
 }
+
+func (Product) TableName() string {
+	return "products"
+}
