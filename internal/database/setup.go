@@ -8,7 +8,10 @@ import (
 
 func setup(db *gorm.DB) error {
 	return db.AutoMigrate(
+		&models.Address{},
 		&models.User{},
 		&models.Product{},
-		&models.Category{})
+		&models.Category{},
+		&models.ProductCategory{},
+	)
 }
