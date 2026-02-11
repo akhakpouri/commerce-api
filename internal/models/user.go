@@ -9,10 +9,11 @@ import (
 
 type User struct {
 	Base
-	FirstName string `gorm:"not null;size:100"`
-	LastName  string `gorm:"not null;size:100"`
-	Email     string `gorm:"unique;size:250"`
-	Password  string `gorm:"not null"`
+	FirstName string    `gorm:"not null;size:100"`
+	LastName  string    `gorm:"not null;size:100"`
+	Email     string    `gorm:"unique;size:250"`
+	Password  string    `gorm:"not null"`
+	Addresses []Address `gorm:"foreignKey:UserId"`
 }
 
 func (u *User) BeforeCreate(tx *gorm.DB) error {
