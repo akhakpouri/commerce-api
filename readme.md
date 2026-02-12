@@ -1,28 +1,44 @@
 # Commerce API
 
-A well-structured REST API for e-commerce functionality built with Go.
+A well-structured REST API for e-commerce functionality built with Go, using GORM and PostgreSQL.
 
 ## Project Structure
 
 ```
 commerce-api/
-├── cmd/
-│   └── server/
-│       └── main.go           # Application entry point
+├── main.go                   # Application entry point
 ├── internal/
-│   ├── handlers/             # HTTP request handlers
-│   ├── services/             # Business logic layer
-│   ├── models/               # Data structures and models
-│   └── middleware/           # HTTP middleware
+│   ├── database/             # Database connection and migrations
+│   │   ├── main.go          # Database initialization
+│   │   └── setup.go         # Migration setup
+│   ├── handlers/             # HTTP request handlers (coming soon)
+│   ├── services/             # Business logic layer (coming soon)
+│   └── models/              # Data models
+│       ├── address.go       # Address model
+│       ├── base.go          # Base model with common fields
+│       ├── category.go      # Category model
+│       ├── product.go       # Product model
+│       ├── product-category.go  # Product-Category relationship
+│       ├── review.go        # Review model
+│       └── user.go          # User model
 ├── pkg/                      # Reusable packages
+├── .golangci.yml            # Linter configuration
 ├── go.mod                    # Go module definition
 ├── go.sum                    # Go module checksums
 └── README.md                 # This file
 ```
 
+## Tech Stack
+
+- **Go**: 1.25.0
+- **Database**: PostgreSQL
+- **ORM**: GORM v1.31.1
+- **Database Driver**: PostgreSQL driver for GORM
+
 ## Prerequisites
 
-- Go 1.21 or later
+- Go 1.25 or later
+- PostgreSQL 13 or later
 - golangci-lint (for linting)
 
 ## Installation
@@ -39,18 +55,66 @@ go mod download
 go mod verify
 ```
 
-## Building
+## Database Setup
+
+### 1. Install PostgreSQL
+
+```bash
+# macOS
+brew install postgresql@15
+brew services start postgresql@15
+
+# Verify installation
+psql --version
+```
+
+### 2. Create Database
+
+```bash
+# Connect to PostgreSQL
+psql postgres
+
+# Create database and user
+CREATE DATABASE commerce;
+CREATE USER commerce WITH ENCRYPTED PASSWORD 'commerce@123';
+GRANT ALL PRIVILEGES ON DATABASE commerce TO commerce;
+
+# Create schema
+\c commerce
+CREATE SCHEMA commerce;
+GRANT ALL ON SCHEMA commerce TO commerce;
+
+# Exit PostgreSQL
+\q
+```
+
+### 3. Update Database Configuration
+
+The database connection string is currently in `internal/database/main.go`:
+
+```go
+connection := "host=localhost user=commerce dbname=commerce port=5432 password=commerce@123 sslmode=disable search_path=commerce"
+```
+
+**Note**: For production, use environment variables for database credentials instead of hardcoding them.
+
+## Building and Running
 
 ```bash
 # Build the application
-go build -o commerce-api ./cmd/server
+go build -o commerce-api
 
-# Run the application
+# Run the application (will auto-migrate database)
 ./commerce-api
 
-# Or run directly
-go run ./cmd/server
+# Or run directly without building
+go run main.go
 ```
+
+The application will:
+1. Connect to the PostgreSQL database
+2. Run automatic migrations for all models
+3. Start the server
 
 ## Testing
 
@@ -112,9 +176,6 @@ go fmt -n ./...
 ```bash
 # Run Go vet
 go vet ./...
-
-# Check for vulnerabilities
-govulncheck ./...
 ```
 
 ## Pre-Commit Verification
@@ -172,22 +233,6 @@ go get -u=patch ./...
 go mod tidy
 ```
 
-## Common Issues
-
-### "return value of '...' is not checked"
-
-This warning means you're calling a function that returns an error, but not checking it:
-
-```go
-// ❌ Wrong
-database.AutoMigrate(&User{})
-
-// ✅ Correct
-if err := database.AutoMigrate(&User{}); err != nil {
-    log.Fatalf("migration failed: %v", err)
-}
-```
-
 ### Import cycles
 
 Check for circular dependencies:
@@ -205,9 +250,41 @@ go mod graph | grep -E "A -> B.*B -> A"
 5. Run `go mod tidy` to clean up dependencies
 6. Commit changes
 
+## Data Models
+
+The API includes the following data models:
+
+- **User**: Customer/user account information
+- **Address**: Shipping and billing addresses
+- **Product**: Product catalog
+- **Category**: Product categories
+- **ProductCategory**: Many-to-many relationship between products and categories
+- **Review**: Product reviews and ratings
+
+All models are automatically migrated to the database on application startup.
+
 ## API Endpoints
 
-*Documentation for API endpoints coming soon*
+*API endpoints are currently under development. The project includes:*
+
+- ✅ Database connection and migrations
+- ✅ Data models (User, Product, Category, Review, Address)
+- 🔄 HTTP handlers (in progress)
+- 🔄 Business logic services (in progress)
+- 🔄 RESTful API endpoints (planned)
+
+## Environment Variables
+
+For production deployments, use environment variables for configuration:
+
+```bash
+export DB_HOST=localhost
+export DB_PORT=5432
+export DB_USER=commerce
+export DB_PASSWORD=your_secure_password
+export DB_NAME=commerce
+export DB_SCHEMA=commerce
+```
 
 ## Contributing
 
