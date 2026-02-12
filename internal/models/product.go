@@ -10,6 +10,7 @@ type Product struct {
 	IsActive          bool              `gorm:"default:true"`
 	IsFeatured        bool              `gorm:"default:false"`
 	ProductCategories []ProductCategory `gorm:"foreignKey:ProductId"`
+	Reviews           []Review          `gorm:"foreignKey:ProductId"`
 }
 
 func (Product) TableName() string {

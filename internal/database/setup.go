@@ -13,5 +13,6 @@ func setup(db *gorm.DB) error {
 		&models.Product{},
 		&models.Category{},
 		&models.ProductCategory{},
+		&models.Review{},
 	)
 }
