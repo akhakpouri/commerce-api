@@ -9,7 +9,7 @@ import (
 func main() {
 	fmt.Println("hello, world!")
 
-	cfg, err := managers.NewDbConfig("utils/configs/config.json")
+	cfg, err := managers.NewDbConfig("configs/config.json")
 	if err != nil {
 		fmt.Println("Error loading config:", err)
 		return
