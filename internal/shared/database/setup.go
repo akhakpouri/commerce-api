@@ -1,7 +1,7 @@
 package database
 
 import (
-	"commerce/api/internal/models"
+	"commerce/internal/shared/models"
 
 	"gorm.io/gorm"
 )

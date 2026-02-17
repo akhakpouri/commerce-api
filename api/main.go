@@ -1,7 +1,7 @@
 package main
 
 import (
-	"commerce/api/internal/database"
+	"commerce/internal/shared/database"
 	"fmt"
 )
 
