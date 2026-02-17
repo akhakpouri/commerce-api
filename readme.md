@@ -7,6 +7,7 @@ Go workspace for an e-commerce backend, organized into multiple modules with a s
 - ✅ Go workspace (`go.work`) with 3 modules
 - ✅ Shared database package with auto-migrations
 - ✅ Data models: User, Address, Product, Category, ProductCategory, Review, Order, OrderItem
+- ✅ `utils` loads DB config from JSON file (`utils/configs/config.json`)
 - 🔄 API handlers and services scaffolding are present but not implemented yet
 
 ## Workspace Structure
@@ -25,6 +26,12 @@ commerce-api/
 │       └── services/          # (currently empty)
 ├── utils/                     # Utility executable module
 │   ├── go.mod
+│   ├── configs/
+│   │   ├── config.json
+│   │   └── config copy.example
+│   ├── internal/
+│   │   └── managers/
+│   │       └── config_manager.go
 │   └── main.go
 ├── internal/
 │   └── shared/                # Shared module used by executables
@@ -69,25 +76,51 @@ CREATE SCHEMA commerce;
 GRANT ALL ON SCHEMA commerce TO commerce;
 ```
 
-Current connection string (in `internal/shared/database/main.go`):
+Current connection template (in `internal/shared/database/main.go`):
 
 ```go
-connection := "host=localhost user=commerce dbname=commerce port=5432 password=commerce@123 sslmode=disable search_path=commerce"
+connection := fmt.Sprintf(
+	"host=%s user=%s dbname=%s port=%d password=%s sslmode=%s search_path=commerce",
+	cfg.Host, cfg.User, cfg.DbName, cfg.Port, cfg.Password, cfg.SSLMode,
+)
 ```
+
+## Utils Configuration (JSON)
+
+`utils` reads DB config from `configs/config.json` (relative to the `utils` module directory).
+
+Expected JSON shape:
+
+```json
+{
+	"host": "localhost",
+	"port": 5432,
+	"user": "commerce",
+	"password": "commerce@123",
+	"dbname": "commerce",
+	"sslmode": "disable",
+	"schema": "commerce"
+}
+```
+
+If file loading fails, `utils` attempts to read environment variables (`DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `DB_SSLMODE`, `DB_SCHEMA`), but currently returns the file error and exits.
 
 ## Running
 
-From repository root:
+Run each executable from its own module directory:
 
 ```bash
 # Run API executable
-go run ./api
+(cd api && go run .)
 
 # Run utils executable
-go run ./utils
+(cd utils && go run .)
 ```
 
-Both executables currently print a message and run shared database migrations.
+Current behavior:
+
+- `api`: prints `hello, world!`
+- `utils`: prints `hello, world!`, loads DB config, then runs migrations
 
 ## Build
 
@@ -130,5 +163,5 @@ go work sync
 ## Notes
 
 - API routes/endpoints are not implemented yet.
-- Database credentials are currently hardcoded for local development.
-- For production, move DB configuration to environment variables.
+- `utils` requires `utils/configs/config.json` when run locally.
+- `utils/configs/config copy.example` can be used as a template file.
