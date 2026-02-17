@@ -422,3 +422,5 @@ go.work.sum
 
 # env file
 .env
+
+utils/configs/config.json

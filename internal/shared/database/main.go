@@ -8,8 +8,10 @@ import (
 	"gorm.io/gorm"
 )
 
-func Migrate() {
-	connection := "host=localhost user=commerce dbname=commerce port=5432 password=commerce@123 sslmode=disable search_path=commerce"
+func Migrate(cfg DbConfig) {
+	connection := fmt.Sprintf(
+		"host=%s user=%s dbname=%s port=%d password=%s sslmode=%s search_path=commerce",
+		cfg.Host, cfg.User, cfg.DbName, cfg.Port, cfg.Password, cfg.SSLMode)
 	database, err := gorm.Open(postgres.Open(connection), &gorm.Config{})
 
 	if err != nil {
