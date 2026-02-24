@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	fmt.Println("hello, world!")
+	fmt.Println("Welcome to the Commerce Utility Application!")
 
 	cfg, err := managers.NewDbConfig("configs/config.json")
 	if err != nil {

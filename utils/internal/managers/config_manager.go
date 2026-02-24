@@ -2,16 +2,24 @@ package managers
 
 import (
 	"commerce/internal/shared/database"
+	"embed"
 	"encoding/json"
 	"fmt"
 	"log/slog"
 	"os"
 )
 
+var content embed.FS
+
 func NewDbConfig(filePath string) (database.DbConfig, error) {
-	slog.Info("Loading database configuration from file:", "filePath", filePath)
+	slog.Info("Loading database configuration from file")
 	// Load database configuration from the specified file if it exists
-	cfg, err := dbConfigFromFile(filePath)
+	dbconfig, err := content.ReadFile(filePath)
+	if err != nil {
+		slog.Error("Error reading config file:", "error", err)
+		return database.DbConfig{}, err
+	}
+	cfg, err := dbConfigFromFile(dbconfig)
 	if err != nil {
 		slog.Error("Error loading config:", "error", err)
 		//otherwise, load from environment variables if they exist
@@ -65,18 +73,9 @@ func getPortFromEnv() int {
 	return defaultPort // default port
 }
 
-func dbConfigFromFile(filePath string) (database.DbConfig, error) {
-	file, err := os.Open(filePath)
-	if err != nil {
-		slog.Error("failed to open config file:", "error", err)
-		return database.DbConfig{}, fmt.Errorf("failed to open config file: %w", err)
-	}
-	//reading only - safe to ignore.
-	defer func() { _ = file.Close() }()
-
+func dbConfigFromFile(config []byte) (database.DbConfig, error) {
 	var cfg database.DbConfig
-	decoder := json.NewDecoder(file)
-	if err := decoder.Decode(&cfg); err != nil {
+	if err := json.Unmarshal(config, &cfg); err != nil {
 		slog.Error("failed to decode config file:", "error", err)
 		return database.DbConfig{}, fmt.Errorf("failed to decode config file: %w", err)
 	}
