@@ -12,20 +12,11 @@ import (
 
 var content embed.FS
 
-func NewDbConfig(filePath string) (database.DbConfig, error) {
-	slog.Info("Loading database configuration from file")
-	// Load database configuration from the specified file if it exists
-	dbconfig, err := content.ReadFile(filePath)
-	if err != nil {
-		slog.Error("Error reading config file:", "error", err)
-		return database.DbConfig{}, err
-	}
+func NewDbConfig(dbconfig []byte) (database.DbConfig, error) {
 	cfg, err := dbConfigFromFile(dbconfig)
 	if err != nil {
-		slog.Error("Error loading config:", "error", err)
-		//otherwise, load from environment variables if they exist
-		cfg = getConfigFromEnv()
-		return cfg, err
+		slog.Error("Error parsing config file, falling back to environment variables:", "error", err)
+		return getConfigFromEnv(), nil
 	}
 
 	return cfg, nil

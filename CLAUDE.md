@@ -94,3 +94,29 @@ Local dev config lives in `utils/configs/config.json`.
 ## Linter Config
 
 `.golangci.yml` at workspace root enables: `errcheck`, `ineffassign`, `unused`, `govet`, `staticcheck`.
+
+## Project Memory System
+
+Notes live in `docs/project-notes/`:
+
+| File           | Purpose                              |
+|----------------|--------------------------------------|
+| `bugs.md`      | Bug log with root causes and fixes   |
+| `decisions.md` | Architectural decision records (ADR) |
+| `facts.md`     | Config, constants, connection info   |
+| `issues.md`    | Work log with branch/ticket refs     |
+
+### Memory-Aware Protocols
+
+**Before proposing architectural changes:**
+- Check `docs/project-notes/decisions.md` for existing decisions.
+- Verify the proposed approach doesn't conflict with past choices.
+
+**When encountering errors or bugs:**
+- Search `docs/project-notes/bugs.md` for similar issues.
+- Apply known fixes if found.
+- Document new bugs and solutions when resolved.
+
+**When looking up project configuration:**
+- Check `docs/project-notes/facts.md` for credentials, ports, connection strings, and env vars.
+- Prefer documented facts over assumptions.
