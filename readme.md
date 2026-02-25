@@ -7,7 +7,7 @@ Go workspace for an e-commerce backend, organized into multiple modules with a s
 - ✅ Go workspace (`go.work`) with 3 modules
 - ✅ Shared database package with auto-migrations
 - ✅ Data models: User, Address, Product, Category, ProductCategory, Review, Order, OrderItem
-- ✅ `utils` loads DB config from JSON file (`utils/configs/config.json`)
+- ✅ `utils` embeds DB config from `utils/configs/config.json` at compile time, with env var fallback
 - 🔄 API handlers and services scaffolding are present but not implemented yet
 
 ## Workspace Structure
@@ -27,8 +27,8 @@ commerce-api/
 ├── utils/                     # Utility executable module
 │   ├── go.mod
 │   ├── configs/
-│   │   ├── config.json
-│   │   └── config copy.example
+│   │   ├── config.json        # gitignored — local credentials
+│   │   └── config.example     # committed reference template
 │   ├── internal/
 │   │   └── managers/
 │   │       └── config_manager.go
@@ -49,18 +49,17 @@ commerce-api/
 │           ├── product-category.go
 │           ├── review.go
 │           └── user.go
-└── pkg/
 ```
 
 ## Go / Dependencies
 
-- Go: `1.25.7`
+- Go: `1.26`
 - ORM: `gorm.io/gorm v1.31.1`
 - DB Driver: `gorm.io/driver/postgres v1.6.0`
 
 ## Prerequisites
 
-- Go 1.25+
+- Go 1.26+
 - PostgreSQL 13+
 - `golangci-lint` (optional but recommended)
 
@@ -76,34 +75,41 @@ CREATE SCHEMA commerce;
 GRANT ALL ON SCHEMA commerce TO commerce;
 ```
 
-Current connection template (in `internal/shared/database/main.go`):
+## Utils Configuration
 
-```go
-connection := fmt.Sprintf(
-	"host=%s user=%s dbname=%s port=%d password=%s sslmode=%s search_path=commerce",
-	cfg.Host, cfg.User, cfg.DbName, cfg.Port, cfg.Password, cfg.SSLMode,
-)
+`utils` embeds `configs/config.json` into the binary at compile time via `//go:embed`. If the file is missing or fails to parse, it falls back to environment variables and continues without error.
+
+Copy the example to get started locally:
+
+```bash
+cp utils/configs/config.example utils/configs/config.json
 ```
-
-## Utils Configuration (JSON)
-
-`utils` reads DB config from `configs/config.json` (relative to the `utils` module directory).
 
 Expected JSON shape:
 
 ```json
 {
-	"host": "localhost",
-	"port": 5432,
-	"user": "commerce",
-	"password": "commerce@123",
-	"dbname": "commerce",
-	"sslmode": "disable",
-	"schema": "commerce"
+    "host": "localhost",
+    "port": 5432,
+    "user": "commerce",
+    "password": "commerce@123",
+    "dbname": "commerce",
+    "sslmode": "disable",
+    "schema": "commerce"
 }
 ```
 
-If file loading fails, `utils` attempts to read environment variables (`DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `DB_SSLMODE`, `DB_SCHEMA`), but currently returns the file error and exits.
+### Environment Variable Fallback
+
+| Variable      | Purpose           |
+|---------------|-------------------|
+| `DB_HOST`     | Database host     |
+| `DB_PORT`     | Database port     |
+| `DB_USER`     | Database user     |
+| `DB_PASSWORD` | Database password |
+| `DB_NAME`     | Database name     |
+| `DB_SSLMODE`  | SSL mode          |
+| `DB_SCHEMA`   | Schema name       |
 
 ## Running
 
@@ -120,7 +126,7 @@ Run each executable from its own module directory:
 Current behavior:
 
 - `api`: prints `hello, world!`
-- `utils`: prints `hello, world!`, loads DB config, then runs migrations
+- `utils`: loads DB config, then runs GORM auto-migrations
 
 ## Build
 
@@ -151,7 +157,7 @@ Run per module:
 
 ## Module Maintenance
 
-Because this repository uses a Go workspace (no root `go.mod`), run tidy inside each module:
+Run tidy inside each module:
 
 ```bash
 (cd api && go mod tidy)
@@ -162,6 +168,6 @@ go work sync
 
 ## Notes
 
-- API routes/endpoints are not implemented yet.
-- `utils` requires `utils/configs/config.json` when run locally.
-- `utils/configs/config copy.example` can be used as a template file.
+- API routes/endpoints are not implemented yet (HTTP framework not yet chosen).
+- `utils/configs/config.json` is gitignored. Use `config.example` as a template.
+- `DeletedDate` on all models uses `time.Time`, not `gorm.DeletedAt` — soft-deleted records are not auto-filtered by GORM.

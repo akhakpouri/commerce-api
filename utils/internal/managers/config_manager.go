@@ -2,21 +2,21 @@ package managers
 
 import (
 	"commerce/internal/shared/database"
+	"embed"
 	"encoding/json"
 	"fmt"
 	"log/slog"
 	"os"
+	"strconv"
 )
 
-func NewDbConfig(filePath string) (database.DbConfig, error) {
-	slog.Info("Loading database configuration from file:", "filePath", filePath)
-	// Load database configuration from the specified file if it exists
-	cfg, err := dbConfigFromFile(filePath)
+var content embed.FS
+
+func NewDbConfig(dbconfig []byte) (database.DbConfig, error) {
+	cfg, err := dbConfigFromFile(dbconfig)
 	if err != nil {
-		slog.Error("Error loading config:", "error", err)
-		//otherwise, load from environment variables if they exist
-		cfg = getConfigFromEnv()
-		return cfg, err
+		slog.Error("Error parsing config file, falling back to environment variables:", "error", err)
+		return getConfigFromEnv(), nil
 	}
 
 	return cfg, nil
@@ -55,28 +55,19 @@ func getConfigFromEnv() database.DbConfig {
 func getPortFromEnv() int {
 	const defaultPort = 5432
 	if port, ok := os.LookupEnv("DB_PORT"); ok {
-		p, err := fmt.Sscanf(port, "%d", &port)
+		p, err := strconv.Atoi(port)
 		if err != nil {
 			slog.Error("Invalid port value in environment variable:", "error", err)
-			return defaultPort // default port
+			return defaultPort
 		}
 		return p
 	}
-	return defaultPort // default port
+	return defaultPort
 }
 
-func dbConfigFromFile(filePath string) (database.DbConfig, error) {
-	file, err := os.Open(filePath)
-	if err != nil {
-		slog.Error("failed to open config file:", "error", err)
-		return database.DbConfig{}, fmt.Errorf("failed to open config file: %w", err)
-	}
-	//reading only - safe to ignore.
-	defer func() { _ = file.Close() }()
-
+func dbConfigFromFile(config []byte) (database.DbConfig, error) {
 	var cfg database.DbConfig
-	decoder := json.NewDecoder(file)
-	if err := decoder.Decode(&cfg); err != nil {
+	if err := json.Unmarshal(config, &cfg); err != nil {
 		slog.Error("failed to decode config file:", "error", err)
 		return database.DbConfig{}, fmt.Errorf("failed to decode config file: %w", err)
 	}
