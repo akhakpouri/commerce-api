@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"strconv"
 )
 
 var content embed.FS
@@ -63,14 +64,14 @@ func getConfigFromEnv() database.DbConfig {
 func getPortFromEnv() int {
 	const defaultPort = 5432
 	if port, ok := os.LookupEnv("DB_PORT"); ok {
-		p, err := fmt.Sscanf(port, "%d", &port)
+		p, err := strconv.Atoi(port)
 		if err != nil {
 			slog.Error("Invalid port value in environment variable:", "error", err)
-			return defaultPort // default port
+			return defaultPort
 		}
 		return p
 	}
-	return defaultPort // default port
+	return defaultPort
 }
 
 func dbConfigFromFile(config []byte) (database.DbConfig, error) {
