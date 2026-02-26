@@ -54,3 +54,23 @@ Config file: `utils/configs/config.json` — gitignored (contains credentials). 
 **Status:** Active
 
 `User` model uses `BeforeCreate` and `BeforeUpdate` GORM hooks to automatically hash the `Password` field with bcrypt. A `CheckPassword()` method is provided for verification. Hashing is transparent to callers.
+
+---
+
+## ADR-006 — Shell script installation with compile-time config embedding
+
+**Date:** 2026-02-26
+**Status:** Active
+
+`utils/install.sh` is the chosen installation mechanism for the migration binary. It builds the binary with `configs/config.json` embedded at compile time and installs it to `$GOPATH/bin/commerce-tools/` alongside a copy of the `configs/` directory.
+
+**Workflow:** edit `config.json` → run `install.sh` → binary is built with credentials baked in → migrations run immediately.
+
+**Why this over alternatives:**
+- `go install` alone can't embed a local config file at the user's `$GOBIN` without a build step
+- Runtime `--config` flag was considered but rejected as unnecessary complexity for this use case
+- Custom install dir (`commerce-tools/`) keeps the binary isolated from other Go tools in `$GOBIN`
+
+**Tradeoff:** targeting a different database requires editing `config.json` and re-running `install.sh` (rebuild required). This is acceptable given the tool's purpose as a one-time migration runner, not a frequently reconfigured service.
+
+**Fix (2026-02-26):** `cp configs` corrected to `cp -r configs` — directory copy was silently failing without the `-r` flag.

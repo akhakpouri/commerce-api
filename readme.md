@@ -8,6 +8,7 @@ Go workspace for an e-commerce backend, organized into multiple modules with a s
 - ✅ Shared database package with auto-migrations
 - ✅ Data models: User, Address, Product, Category, ProductCategory, Review, Order, OrderItem
 - ✅ `utils` embeds DB config from `utils/configs/config.json` at compile time, with env var fallback
+- ✅ `utils/install.sh` — builds and installs the migration binary with custom config to `$GOPATH/bin/commerce-tools/`
 - 🔄 API handlers and services scaffolding are present but not implemented yet
 
 ## Workspace Structure
@@ -26,6 +27,7 @@ commerce-api/
 │       └── services/          # (currently empty)
 ├── utils/                     # Utility executable module
 │   ├── go.mod
+│   ├── install.sh             # builds & installs binary with custom config
 │   ├── configs/
 │   │   ├── config.json        # gitignored — local credentials
 │   │   └── config.example     # committed reference template
@@ -110,6 +112,44 @@ Expected JSON shape:
 | `DB_NAME`     | Database name     |
 | `DB_SSLMODE`  | SSL mode          |
 | `DB_SCHEMA`   | Schema name       |
+
+## Installing `commerce-migrate`
+
+`utils/install.sh` builds the migration binary with your local `config.json` baked in and installs it to `$GOPATH/bin/commerce-tools/`.
+
+**Prerequisites:** `$GOPATH` must be set.
+
+**Steps:**
+
+1. Copy and edit the config template with your target database credentials:
+
+```bash
+cp utils/configs/config.example utils/configs/config.json
+vim utils/configs/config.json
+```
+
+2. Run the install script from the `utils/` directory:
+
+```bash
+(cd utils && bash install.sh)
+```
+
+This will:
+- Create `$GOPATH/bin/commerce-tools/` if it doesn't exist
+- Copy `configs/` alongside the binary (for reference)
+- Build the binary with `config.json` embedded at compile time
+- Install it to `$GOPATH/bin/commerce-tools/utils`
+- Execute the binary immediately to run migrations
+
+**To run migrations again after install:**
+
+```bash
+$GOPATH/bin/commerce-tools/utils
+```
+
+> The database config is embedded at compile time. To target a different database, edit `config.json` and re-run `install.sh`.
+
+---
 
 ## Running
 
