@@ -123,11 +123,33 @@ CREATE SCHEMA commerce AUTHORIZATION commerce;
 
 **Order** (`orders`)
 - `Status OrderStatus` — enum: `pending`, `shipped`, `delivered`, `cancelled`
-- `PaymentStatus PaymentStatus` — enum: `pending`, `completed`, `failed`, `refunded`
+- `Payments []Payment` — 1:many association (replaces old `PaymentStatus` field)
 - References `Address` twice (shipping + billing) via explicit FK fields
+
+**Payment** (`payments`)
+- `PaymentStatus` type lives here — referenced by `Order` via association, not a field
+- Status enum: `pending`, `authorized`, `captured`, `failed`, `refunded`, `partially_refunded`
+- `PaymentGateway` enum: `stripe`, `paypal`, `square`, `authorize_net`
+- `PaymentMethod` enum: `credit_card`, `debit_card`, `paypal`, `bank_transfer`
+- `GatewayTransactionId` — nullable (failed/pending payments may not have one)
+- `PaidAt *time.Time` — nullable, only set when payment is captured
 
 **ProductCategory** (`product_categories`)
 - Pure junction table; carries its own `Base` (Id + timestamps)
+
+---
+
+---
+
+## DTO Layer (`api/internal/dto/`, ADR-008)
+
+- Each DTO lives in its own sub-package: `api/internal/dto/<name>/<name>.go`
+- Package name must match directory name (e.g. `package product` not `package dto`)
+- Each package exposes `FromModel(...)` and `ToModel(...)` only — no business logic
+- Enums: `string(models.SomeEnum)` to convert to string; `models.SomeEnum(str)` to convert back
+- `*time.Time` fields: always nil-check before calling `.Format()` or panic occurs
+- Time format in use: `"01/02/2006 15:04:05"` — Go reference time, 24-hour clock
+- Format and parse layouts must be identical — mismatch causes silent `nil` on parse
 
 ---
 
