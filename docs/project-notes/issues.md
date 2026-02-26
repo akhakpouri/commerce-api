@@ -1,5 +1,23 @@
 # Work Log
 
+## Issue #38 — Payment model implementation
+
+**Date:** 2026-02-26
+**Status:** Done
+**Branch:** `feature/issue-9`
+**GitHub Issue:** #9
+
+Designing and implementing the `Payment` entity as per ADR-007. Model lives in `internal/shared/models/payment.go` and must be registered in `internal/shared/database/setup.go`.
+
+**Scope:**
+- [x] `Payment` model with all fields from ADR-007
+- [x] Register model for GORM AutoMigrate
+- [x] Update `Order` model if needed (e.g., `Payments []Payment` association)
+
+See ADR-007 in `decisions.md` for full field list and rationale.
+
+---
+
 ## Issue #37 — ADR-003 embed fix
 
 **Status:** Done

@@ -16,5 +16,6 @@ func setup(db *gorm.DB) error {
 		&models.Review{},
 		&models.Order{},
 		&models.OrderItem{},
+		&models.Payment{},
 	)
 }
