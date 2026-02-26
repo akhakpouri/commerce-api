@@ -74,3 +74,22 @@ Config file: `utils/configs/config.json` — gitignored (contains credentials). 
 **Tradeoff:** targeting a different database requires editing `config.json` and re-running `install.sh` (rebuild required). This is acceptable given the tool's purpose as a one-time migration runner, not a frequently reconfigured service.
 
 **Fix (2026-02-26):** `cp configs` corrected to `cp -r configs` — directory copy was silently failing without the `-r` flag.
+
+---
+
+## ADR-007 — Payment model as a separate table with audit trail
+
+**Date:** 2026-02-26
+**Status:** Active — implemented and migrated 2026-02-26
+
+Rather than extending `Order` with more payment fields, `Payment` is its own table with a many-to-one relationship to `Order`. This preserves the full history of payment attempts (retries, refunds) rather than overwriting a single status.
+
+**Fields:** `OrderId` (FK), `Amount`, `Currency`, `Status`, `Gateway`, `GatewayTransactionId`, `GatewayResponse`, `PaymentMethod`, `PaidAt` (nullable).
+
+**Status enum:** `pending | authorized | captured | failed | refunded | partially_refunded`
+
+**Key decisions:**
+- `Order.PaymentStatus` is kept as a denormalized convenience flag ("is this order paid?") — the `Payment` table is the source of truth for *how* and *when*.
+- No separate `PaymentMethod` model for MVP — gateway tokens (e.g., Stripe `pm_...`) stored as a string field on `Payment`.
+- Refunds handled via status + `RefundedAmount` on the existing `Payment` row (not separate rows) for MVP simplicity.
+- Actual card data never stored — delegated entirely to the payment gateway (PCI compliance).
