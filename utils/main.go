@@ -19,7 +19,6 @@ func main() {
 // migrateDatabase is the main entry point for the utility application.
 // It reads the database configuration from the specified file and performs database migrations.
 func migrateDatabase(filePath string) {
-	fmt.Println("Welcome to the Commerce Utility Application!")
 
 	dbconfig, err := content.ReadFile(filePath)
 	if err != nil {
