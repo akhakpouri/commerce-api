@@ -93,3 +93,31 @@ Rather than extending `Order` with more payment fields, `Payment` is its own tab
 - No separate `PaymentMethod` model for MVP — gateway tokens (e.g., Stripe `pm_...`) stored as a string field on `Payment`.
 - Refunds handled via status + `RefundedAmount` on the existing `Payment` row (not separate rows) for MVP simplicity.
 - Actual card data never stored — delegated entirely to the payment gateway (PCI compliance).
+
+---
+## ADR-008 — Thin DTOs with service-layer mapping and business logic
+
+**Date:** 2026-02-26
+**Status:** Active — pending implementation
+
+API payloads are represented as DTOs (request/response structs) living in `api/internal/dto/`. DTOs are plain data containers — json tags, validation tags, and mapping methods only. Business logic lives exclusively in `api/internal/services/`.
+
+**Layer responsibilities:**
+
+| Concern | Layer |
+|---|---|
+| JSON shape / validation tags | DTO (`api/internal/dto/`) |
+| Mapping DTO ↔ model | DTO methods (`ToModel()` / `FromModel()`) |
+| Business rules (e.g. order must exist, not already paid) | Service |
+| Password hashing, GORM hook behaviour | Model |
+| DB persistence | Service (via GORM) |
+
+**Mapping convention:** `ToModel()` as a method on request DTOs; standalone `FromModel()` functions for response DTOs.
+
+**Why not business logic in DTOs:**
+- GORM hooks on models (e.g. `User.BeforeCreate` bcrypt) already own some business logic — duplicating concerns in DTOs creates conflicts.
+- DTOs live in `api/`; if logic lives there it can't be reused by other consumers (CLI, workers) without creating cross-module coupling.
+
+**Why not logic in models:**
+- Models are shared across all consumers via `internal/shared` — embedding API-specific rules there pollutes the shared library.
+---
