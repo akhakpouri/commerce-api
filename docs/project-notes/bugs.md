@@ -150,3 +150,109 @@ Removed `PaymentStatus` from `order.go`. It now lives exclusively in `payment.go
 
 ### Fix
 Removed `not null` constraint. Field is now nullable and unique only when populated.
+
+---
+
+## BUG-010 — Typo in `AddressRepository`: `GetByUsrerId` / `adress_repository.go`
+
+**File:** `internal/shared/repositories/address/adress_repository.go`
+**Discovered:** 2026-02-27
+**Status:** Open
+
+### Description
+Two typos: the filename is `adress_repository.go` (missing an `d`) and the method is named `GetByUsrerId` (missing a `e`) in both the interface and implementation. Callers importing this package will reference the wrong name.
+
+### Fix
+Rename file to `address_repository.go`. Rename method to `GetByUserId` in both the interface and the implementation.
+
+---
+
+## BUG-011 — `Save` overwrites caller's data in address and category repos
+
+**Files:** `internal/shared/repositories/address/adress_repository.go`, `internal/shared/repositories/category/category_repository.go`
+**Discovered:** 2026-02-27
+**Status:** Open
+
+### Description
+In both repos, the `Save` method passes `&address` (or `&category`) — a pointer-to-pointer — to `r.db.First(...)`. GORM scans the DB record into the struct the pointer points to, overwriting the caller's in-memory changes before `Save` is called. Updates become no-ops.
+
+```go
+// Buggy — fetches DB data into address, losing caller's changes
+} else if err := r.db.First(&address, address.Id).Error; err != nil {
+    return err
+}
+return r.db.Save(address).Error
+```
+
+### Fix
+Use a separate variable to check existence without touching the caller's data:
+```go
+var existing models.Address
+if err := r.db.First(&existing, address.Id).Error; err != nil {
+    return err
+}
+return r.db.Save(address).Error
+```
+
+---
+
+## BUG-012 — Read methods return soft-deleted records in address and category repos
+
+**Files:** `internal/shared/repositories/address/adress_repository.go`, `internal/shared/repositories/category/category_repository.go`
+**Discovered:** 2026-02-27
+**Status:** Open
+
+### Description
+`GetById`, `GetAll`, `GetByUserId`, and `GetByParentId` do not filter on `deleted_date`. Because `Base.DeletedDate` is `time.Time` (not `gorm.DeletedAt`), GORM does not auto-filter soft-deleted records. All read queries return deleted records alongside active ones.
+
+### Fix
+Add `.Where("deleted_date = ?", time.Time{})` to every read query. Example:
+```go
+r.db.Where("deleted_date = ?", time.Time{}).First(&address, id)
+r.db.Where("deleted_date = ?", time.Time{}).Find(&addresses)
+```
+
+---
+
+## BUG-013 — `CategoryRepository.GetById` scans into `&category.Id` instead of `&category`
+
+**File:** `internal/shared/repositories/category/category_repository.go`
+**Discovered:** 2026-02-27
+**Status:** Open
+
+### Description
+```go
+r.db.First(&category.Id, id)
+```
+`&category.Id` is a `*uint`. GORM receives a scalar pointer instead of a struct pointer and cannot populate the full model. The returned `category` will have all fields at zero value except `Id`.
+
+### Fix
+```go
+r.db.First(&category, id)
+```
+
+---
+
+## BUG-014 — `CategoryRepository.Delete` soft branch performs a hard delete
+
+**File:** `internal/shared/repositories/category/category_repository.go`
+**Discovered:** 2026-02-27
+**Status:** Open
+
+### Description
+```go
+// intended as soft delete
+return r.db.Delete(&models.Category{}, id).Error
+// intended as hard delete
+return r.db.Unscoped().Delete(&models.Category{}, id).Error
+```
+Because `Base.DeletedDate` is `time.Time` (not `gorm.DeletedAt`), GORM has no soft-delete awareness. `r.db.Delete(...)` issues a SQL `DELETE` statement regardless — both branches do a hard delete. `Unscoped()` is also a no-op here (it only bypasses `gorm.DeletedAt` filtering).
+
+### Fix
+Soft branch must manually set `deleted_date`:
+```go
+// soft
+return r.db.Model(&models.Category{}).Where("id = ?", id).Update("deleted_date", time.Now()).Error
+// hard
+return r.db.Delete(&models.Category{}, id).Error
+```
