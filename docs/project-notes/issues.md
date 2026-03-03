@@ -17,6 +17,9 @@ Implementing the repository layer (ADR-009) and service layer (ADR-008). See bot
 - [ ] `repositories/order/order_repository.go`
 - [ ] `repositories/payment/payment_repository.go`
 
+**Note — `Save` method primary key retention:**
+GORM mutates the pointer passed to `Save` in place — the generated primary key is written back onto the struct automatically. No signature change needed. Callers just need to hold onto the pointer they pass in and read the ID from it after `Save` returns. No action required — awareness only.
+
 **Service layer** (`api/internal/services/`) — owns business logic, returns DTOs:
 - [ ] `services/user/user_service.go`
 - [ ] `services/address/address_service.go`

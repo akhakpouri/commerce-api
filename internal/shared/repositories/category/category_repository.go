@@ -18,6 +18,11 @@ type CategoryRepository struct {
 	db *gorm.DB
 }
 
+// Repository constructor returns the interface
+func NewCategoryRepository(db *gorm.DB) CategoryRepositoryI {
+	return &CategoryRepository{db: db}
+}
+
 func (r *CategoryRepository) GetById(id uint) (*models.Category, error) {
 	var category models.Category
 	if err := r.db.First(&category.Id, id).Error; err != nil {
@@ -56,9 +61,4 @@ func (r *CategoryRepository) Delete(id uint, hard bool) error {
 		return r.db.Unscoped().Delete(&models.Category{}, id).Error
 	}
 	return r.db.Delete(&models.Category{}, id).Error
-}
-
-// Repository constructor returns the interface
-func NewCategoryRepository(db *gorm.DB) CategoryRepositoryI {
-	return &CategoryRepository{db: db}
 }
