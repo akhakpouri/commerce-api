@@ -250,4 +250,23 @@ internal/shared/repositories/
 - Services become testable without a real DB — inject a mock repo instead.
 - Query logic is centralized; soft-delete filtering isn't scattered across services.
 - Swapping GORM for another persistence mechanism only touches the repo layer.
+
+---
+
+## ADR-010 — Default sort order on all repository `Find` methods
+
+**Date:** 2026-03-04
+**Status:** Pending
+
+All repository methods that return multiple records (e.g. `GetAll`, `GetByUserId`, `GetByProductId`) must apply an explicit `.Order(...)` clause before calling `Find()`. Without it, PostgreSQL returns rows in undefined order — results are non-deterministic across queries.
+
+**Convention:** Default sort by `created_date ASC` unless the domain has a more natural ordering (e.g. `position`, `name`). Document any per-repo overrides inline.
+
+**Example:**
+```go
+r.db.Order("created_date ASC").Find(&results)
+```
+
+**Action required:** Apply to all multi-record `Find` calls across all repositories once implementation is stabilised.
+
 ---

@@ -2,6 +2,7 @@ package category
 
 import (
 	"commerce/internal/shared/models"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -25,7 +26,7 @@ func NewCategoryRepository(db *gorm.DB) CategoryRepositoryI {
 
 func (r *CategoryRepository) GetById(id uint) (*models.Category, error) {
 	var category models.Category
-	if err := r.db.First(&category.Id, id).Error; err != nil {
+	if err := r.db.First(&category, id).Error; err != nil {
 		return nil, err
 	}
 	return &category, nil
@@ -56,7 +57,12 @@ func (r *CategoryRepository) Save(category *models.Category) error {
 
 func (r *CategoryRepository) Delete(id uint, hard bool) error {
 	if hard {
-		return r.db.Unscoped().Delete(&models.Category{}, id).Error
+		return r.db.Delete(&models.Category{}, id).Error
 	}
-	return r.db.Delete(&models.Category{}, id).Error
+	var category models.Category
+	if err := r.db.First(&category, id).Error; err != nil {
+		return err
+	}
+	category.DeletedDate = time.Now()
+	return r.db.Save(&category).Error
 }

@@ -49,9 +49,9 @@ func (r *PaymentRepository) GetByOrder(orderId uint) ([]*models.Payment, error) 
 
 func (r *PaymentRepository) Save(payment *models.Payment) error {
 	if payment.Id == 0 {
-		return r.db.Create(&payment).Error
+		return r.db.Create(payment).Error
 	}
-	return r.db.Save(&payment).Error
+	return r.db.Save(payment).Error
 }
 
 func (r *PaymentRepository) Delete(id uint, hard bool) error {
@@ -60,8 +60,8 @@ func (r *PaymentRepository) Delete(id uint, hard bool) error {
 	}
 	payment := models.Payment{}
 	if err := r.db.First(&payment, id).Error; err != nil {
-		return nil
+		return err
 	}
 	payment.DeletedDate = time.Now()
-	return r.db.Save(payment).Error
+	return r.db.Save(&payment).Error
 }

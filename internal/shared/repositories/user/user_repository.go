@@ -25,20 +25,20 @@ func NewUserRepository(db *gorm.DB) UserRepositoryI {
 // Delete implements [UserRepositoryI].
 func (u *UserRepository) Delete(id uint, hard bool) error {
 	if hard {
-		return u.db.Delete(models.User{}, id).Error
+		return u.db.Delete(&models.User{}, id).Error
 	}
-	var user *models.User
+	var user models.User
 	if err := u.db.First(&user, id).Error; err != nil {
 		return err
 	}
 	user.DeletedDate = time.Now()
-	return u.db.Save(user).Error
+	return u.db.Save(&user).Error
 }
 
 // GetAll implements [UserRepositoryI].
 func (u *UserRepository) GetAll() ([]*models.User, error) {
 	var users []*models.User
-	if err := u.db.Find(models.User{}, &users).Error; err != nil {
+	if err := u.db.Find(&users).Error; err != nil {
 		return nil, err
 	}
 	return users, nil
