@@ -1,5 +1,36 @@
 # Work Log
 
+## Issue — Repository + Service layer implementation (ADR-008, ADR-009)
+
+**Date:** 2026-02-27
+**Status:** In progress
+**Branch:** `main`
+
+Implementing the repository layer (ADR-009) and service layer (ADR-008). See both ADRs in `decisions.md` for full interface signatures and implementation notes.
+
+**Repository layer** (`internal/shared/repositories/`) — owns GORM queries, returns models:
+- [x] `repositories/user/user_repository.go`
+- [x] `repositories/address/address_repository.go`
+- [x] `repositories/product/product_repository.go`
+- [x] `repositories/category/category_repository.go`
+- [x] `repositories/review/review_repository.go`
+- [x] `repositories/order/order_repository.go`
+- [x] `repositories/payment/payment_repository.go`
+
+**Note — `Save` method primary key retention:**
+GORM mutates the pointer passed to `Save` in place — the generated primary key is written back onto the struct automatically. No signature change needed. Callers just need to hold onto the pointer they pass in and read the ID from it after `Save` returns. No action required — awareness only.
+
+**Service layer** (`api/internal/services/`) — owns business logic, returns DTOs:
+- [ ] `services/user/user_service.go`
+- [ ] `services/address/address_service.go`
+- [ ] `services/product/product_service.go`
+- [ ] `services/category/category_service.go`
+- [ ] `services/review/review_service.go`
+- [ ] `services/order/order_service.go`
+- [ ] `services/payment/payment_service.go`
+
+---
+
 ## Issue #38 — Payment model implementation
 
 **Date:** 2026-02-26

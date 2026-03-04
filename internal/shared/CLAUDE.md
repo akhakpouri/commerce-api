@@ -23,7 +23,26 @@ Eight domain models, all embedding `Base`:
 **Notable model behaviour:**
 - `User` — `BeforeCreate`/`BeforeUpdate` hooks auto-bcrypt the `Password` field; `CheckPassword(string) bool` for verification
 - `Category` — self-referential via `ParentId *uint` (nullable); supports unlimited-depth tree
-- `Order` — uses string enum types `OrderStatus` and `PaymentStatus` defined in `order.go`
+- `Order` — uses string enum type `OrderStatus` defined in `order.go`; payment state is read via `Payments []Payment` association (see ADR-007)
+
+### `repositories`
+One sub-package per domain. Each defines an interface (`XxxRepositoryI`) and a concrete struct (`XxxRepository`). Constructor takes `*gorm.DB` and returns the interface.
+
+```
+repositories/
+├── user/user_repository.go
+├── address/address_repository.go
+├── product/product_repository.go
+├── category/category_repository.go
+├── review/review_repository.go
+├── order/order_repository.go
+├── order_item/order_item_repository.go
+└── payment/payment_repository.go
+```
+
+**Soft-delete:** `DeletedDate` is `time.Time` — repos manually set it and call `Save`. GORM's built-in soft-delete filtering does NOT apply.
+
+**Hard-delete:** pass `hard: true` to `Delete` — executes a permanent `DELETE`.
 
 ## Adding Dependencies
 ```bash
