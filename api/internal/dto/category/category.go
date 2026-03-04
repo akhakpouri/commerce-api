@@ -22,6 +22,14 @@ func FromModel(category *models.Category) *Category {
 	}
 }
 
+func FromAllModels(categories []*models.Category) []*Category {
+	dtos := make([]*Category, 0, len(categories))
+	for _, category := range categories {
+		dtos = append(dtos, FromModel(category))
+	}
+	return dtos
+}
+
 func ToModel(category *Category) *models.Category {
 	return &models.Category{
 		Name:        category.Name,
