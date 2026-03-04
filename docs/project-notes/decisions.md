@@ -112,7 +112,7 @@ API payloads are represented as DTOs (request/response structs) living in `api/i
 | Mapping DTO ↔ model | DTO methods (`ToModel()` / `FromModel()`) |
 | Business rules (e.g. order must exist, not already paid) | Service |
 | Password hashing, GORM hook behaviour | Model |
-| DB persistence | Service (via GORM) |
+| DB persistence | Repository (via GORM) — services never import or reference GORM directly |
 
 **Mapping convention:** `ToModel()` as a method on request DTOs; standalone `FromModel()` functions for response DTOs.
 
