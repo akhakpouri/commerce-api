@@ -50,8 +50,6 @@ func (r *CategoryRepository) GetAll() ([]*models.Category, error) {
 func (r *CategoryRepository) Save(category *models.Category) error {
 	if category.Id == 0 {
 		return r.db.Create(category).Error
-	} else if err := r.db.First(&category, category.Id).Error; err != nil {
-		return err
 	}
 	return r.db.Save(category).Error
 }

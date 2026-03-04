@@ -40,9 +40,9 @@ func (r *OrderItemRepository) GetAllByOrder(orderId uint) ([]*models.OrderItem, 
 
 func (r *OrderItemRepository) Save(item *models.OrderItem) error {
 	if item.Id == 0 {
-		return r.db.Create(&item).Error
+		return r.db.Create(item).Error
 	}
-	return r.db.Save(&item).Error
+	return r.db.Save(item).Error
 }
 
 func (r *OrderItemRepository) Delete(id uint, hard bool) error {
@@ -54,5 +54,5 @@ func (r *OrderItemRepository) Delete(id uint, hard bool) error {
 		return err
 	}
 	orderItem.DeletedDate = time.Now()
-	return r.db.Save(orderItem).Error
+	return r.db.Save(&orderItem).Error
 }

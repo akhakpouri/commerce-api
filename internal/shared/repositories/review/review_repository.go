@@ -41,12 +41,8 @@ func (r *ReviewRepository) GetByProductId(productId uint) ([]*models.Review, err
 func (r *ReviewRepository) Save(review *models.Review) error {
 	if review.Id == 0 {
 		return r.db.Create(review).Error
-	} else {
-		if _, err := r.GetById(review.Id); err != nil {
-			return err
-		}
-		return r.db.Save(review).Error
 	}
+	return r.db.Save(review).Error
 }
 
 func (r *ReviewRepository) Delete(id uint, hard bool) error {

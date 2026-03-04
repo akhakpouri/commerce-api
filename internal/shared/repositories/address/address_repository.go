@@ -9,7 +9,7 @@ import (
 
 type AddressRepositoryI interface {
 	GetById(id uint) (*models.Address, error)
-	GetByUsrerId(userId uint) ([]*models.Address, error)
+	GetByUserId(userId uint) ([]*models.Address, error)
 	GetAll() ([]*models.Address, error)
 	Save(address *models.Address) error
 	Delete(id uint, hard bool) error
@@ -32,7 +32,7 @@ func (r *AddressRepository) GetById(id uint) (*models.Address, error) {
 	return &address, nil
 }
 
-func (r *AddressRepository) GetByUsrerId(userId uint) ([]*models.Address, error) {
+func (r *AddressRepository) GetByUserId(userId uint) ([]*models.Address, error) {
 	var addresses []*models.Address
 	if err := r.db.Where("user_id = ?", userId).Find(&addresses).Error; err != nil {
 		return nil, err
@@ -51,8 +51,6 @@ func (r *AddressRepository) GetAll() ([]*models.Address, error) {
 func (r *AddressRepository) Save(address *models.Address) error {
 	if address.Id == 0 {
 		return r.db.Create(address).Error
-	} else if err := r.db.First(&address, address.Id).Error; err != nil {
-		return err
 	}
 	return r.db.Save(address).Error
 }
