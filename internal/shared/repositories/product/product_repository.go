@@ -10,6 +10,7 @@ import (
 type ProductRepositoryI interface {
 	GetById(id uint) (*models.Product, error)
 	GetAll() ([]*models.Product, error)
+	GetAllByCategoryId(categoryId uint) ([]*models.Product, error)
 	Save(product *models.Product) error
 	Delete(id uint, hard bool) error
 }
@@ -39,6 +40,15 @@ func (p *ProductRepository) Delete(id uint, hard bool) error {
 func (p *ProductRepository) GetAll() ([]*models.Product, error) {
 	var products []*models.Product
 	if err := p.db.Find(&products).Error; err != nil {
+		return nil, err
+	}
+	return products, nil
+}
+
+// GetAllByCategoryId implements [ProductRepositoryI].
+func (p *ProductRepository) GetAllByCategoryId(categoryId uint) ([]*models.Product, error) {
+	var products []*models.Product
+	if err := p.db.Where("category_id = ?", categoryId).Find(&products).Error; err != nil {
 		return nil, err
 	}
 	return products, nil
