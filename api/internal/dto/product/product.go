@@ -44,6 +44,14 @@ func FromModel(product *models.Product) *Product {
 	}
 }
 
+func FromAllModels(products []*models.Product) []*Product {
+	dtos := make([]*Product, 0, len(products))
+	for _, product := range products {
+		dtos = append(dtos, FromModel(product))
+	}
+	return dtos
+}
+
 func ToModel(product *Product) *models.Product {
 	return &models.Product{
 		Name:        product.Name,
