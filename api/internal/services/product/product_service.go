@@ -3,13 +3,13 @@ package product
 import (
 	dto "commerce/api/internal/dto/product"
 	repo "commerce/internal/shared/repositories/product"
+	"log/slog"
 )
 
 type ProductServiceI interface {
 	GetById(id uint) (*dto.Product, error)
 	GetAll() ([]*dto.Product, error)
 	GetAllByCategory(categoryId uint) ([]*dto.Product, error)
-	GetAllByOrder(orderId uint) ([]*dto.Product, error)
 	Save(product *dto.Product) error
 	Delete(id uint, hard bool) error
 }
@@ -29,22 +29,32 @@ func (p *ProductService) Delete(id uint, hard bool) error {
 
 // GetAll implements [ProductServiceI].
 func (p *ProductService) GetAll() ([]*dto.Product, error) {
-	panic("unimplemented")
+	models, err := p.repo.GetAll()
+	if err != nil {
+		slog.Error("Exception thrown when getting all product", "error", err)
+		return nil, err
+	}
+	return dto.FromAllModels(models), nil
 }
 
 // GetAllByCategory implements [ProductServiceI].
 func (p *ProductService) GetAllByCategory(categoryId uint) ([]*dto.Product, error) {
-	panic("unimplemented")
-}
-
-// GetAllByOrder implements [ProductServiceI].
-func (p *ProductService) GetAllByOrder(orderId uint) ([]*dto.Product, error) {
-	panic("unimplemented")
+	models, err := p.repo.GetAllByCategoryId(categoryId)
+	if err != nil {
+		slog.Error("Exception thrown when getting product by category", "error", err)
+		return nil, err
+	}
+	return dto.FromAllModels(models), nil
 }
 
 // GetById implements [ProductServiceI].
 func (p *ProductService) GetById(id uint) (*dto.Product, error) {
-	panic("unimplemented")
+	model, err := p.repo.GetById(id)
+	if err != nil {
+		slog.Error("Exception thrown when getting product by id", "error", err)
+		return nil, err
+	}
+	return dto.FromModel(model), nil
 }
 
 // Save implements [ProductServiceI].

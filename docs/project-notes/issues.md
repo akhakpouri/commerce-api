@@ -24,7 +24,7 @@ GORM mutates the pointer passed to `Save` in place — the generated primary key
 - [x] `services/address/address_service.go`
 - [x] `services/category/category_service.go`
 - [ ] `services/user/user_service.go`
-- [ ] `services/product/product_service.go` ← in progress
+- [x] `services/product/product_service.go`
 - [ ] `services/review/review_service.go`
 - [ ] `services/order/order_service.go`
 - [ ] `services/payment/payment_service.go`
