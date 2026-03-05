@@ -22,6 +22,14 @@ func FromModel(review *models.Review) *Review {
 	}
 }
 
+func FromAllModels(reviews []*models.Review) []*Review {
+	dtos := make([]*Review, 0, len(reviews))
+	for _, review := range reviews {
+		dtos = append(dtos, FromModel(review))
+	}
+	return dtos
+}
+
 func ToModel(review *Review) *models.Review {
 	return &models.Review{
 		ProductId: review.ProductId,
