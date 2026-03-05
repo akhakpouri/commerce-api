@@ -253,6 +253,17 @@ internal/shared/repositories/
 
 ---
 
+## ADR-011 — Users cannot be hard-deleted via the API
+
+**Date:** 2026-03-05
+**Status:** Active
+
+`UserService.Delete` soft-deletes only (`hard: false` hardcoded). Hard-delete is available at the repository level but intentionally not exposed through the service or any API endpoint.
+
+**Rationale:** User records are referenced by orders, reviews, and addresses. Hard-deleting a user would orphan those records. Soft-delete preserves referential integrity and audit history.
+
+---
+
 ## ADR-010 — Default sort order on all repository `Find` methods
 
 **Date:** 2026-03-04

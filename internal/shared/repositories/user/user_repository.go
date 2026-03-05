@@ -9,6 +9,7 @@ import (
 
 type UserRepositoryI interface {
 	GetById(id uint) (*models.User, error)
+	GetByEmail(email string) (*models.User, error)
 	GetAll() ([]*models.User, error)
 	Save(user *models.User) error
 	Delete(id uint, hard bool) error
@@ -42,6 +43,15 @@ func (u *UserRepository) GetAll() ([]*models.User, error) {
 		return nil, err
 	}
 	return users, nil
+}
+
+// GetByEmail implements [UserRepositoryI].
+func (u *UserRepository) GetByEmail(email string) (*models.User, error) {
+	var user models.User
+	if err := u.db.Where("email = ?", email).First(&user).Error; err != nil {
+		return nil, err
+	}
+	return &user, nil
 }
 
 // GetById implements [UserRepositoryI].

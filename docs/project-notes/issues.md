@@ -23,7 +23,7 @@ GORM mutates the pointer passed to `Save` in place — the generated primary key
 **Service layer** (`api/internal/services/`) — owns business logic, returns DTOs:
 - [x] `services/address/address_service.go`
 - [x] `services/category/category_service.go`
-- [ ] `services/user/user_service.go`
+- [x] `services/user/user_service.go`
 - [x] `services/product/product_service.go`
 - [x] `services/review/review_service.go`
 - [ ] `services/order/order_service.go`
