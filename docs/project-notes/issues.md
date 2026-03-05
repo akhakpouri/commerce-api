@@ -21,13 +21,45 @@ Implementing the repository layer (ADR-009) and service layer (ADR-008). See bot
 GORM mutates the pointer passed to `Save` in place — the generated primary key is written back onto the struct automatically. No signature change needed. Callers just need to hold onto the pointer they pass in and read the ID from it after `Save` returns. No action required — awareness only.
 
 **Service layer** (`api/internal/services/`) — owns business logic, returns DTOs:
+- [x] `services/address/address_service.go`
+- [x] `services/category/category_service.go`
 - [ ] `services/user/user_service.go`
-- [ ] `services/address/address_service.go`
-- [ ] `services/product/product_service.go`
-- [ ] `services/category/category_service.go`
+- [x] `services/product/product_service.go`
 - [ ] `services/review/review_service.go`
 - [ ] `services/order/order_service.go`
 - [ ] `services/payment/payment_service.go`
+
+**Repo additions required before services can be completed:**
+- `user_repository.go` — add `GetByEmail(email string) (*models.User, error)` (needed by `UserService.Authenticate`)
+- `order_repository.go` — add `GetByUserId(userId uint) ([]*models.Order, error)` (needed by `OrderService.GetByUserId`)
+
+**Service design notes (feature/issue-26):**
+
+`UserService` — interface: `GetById`, `GetAll`, `Save`, `Delete(id, hard)`, `Authenticate(email, password)`
+- `Authenticate`: `repo.GetByEmail` → `model.CheckPassword(password)` → return `errors.New("invalid credentials")` if false
+
+`ProductService` — interface: `GetById`, `GetAll`, `GetByCategory(categoryId)`, `Save`, `Delete(id, hard)`
+- `GetByCategory` lives here (not CategoryService) — returns products; category is just a filter
+- `GetByOrder` was considered and rejected — `OrderItem` DTO already carries the product info needed at order time; no need to re-fetch
+
+`ReviewService` — interface: `GetById`, `GetByProductId`, `Save`, `Delete(id, hard)`
+- `GetByProductId` returns `[]*dto.Review`
+
+`OrderService` — interface: `GetById`, `GetByUserId`, `Save`, `Delete(id, hard)`, `UpdateStatus(id, status)`
+- Injects both `OrderRepositoryI` and `OrderItemRepositoryI` (per CLAUDE.md)
+- `UpdateStatus`: validate status string against `models.OrderStatus` consts before calling repo
+- Valid statuses: `pending`, `shipped`, `delivered`, `cancelled`
+
+`PaymentService` — interface: `GetById`, `GetByOrderId`, `Save`, `Delete(id, hard)`, `UpdateStatus(id, status)`
+- `GetByOrderId` maps to `repo.GetByOrder`
+- `UpdateStatus`: validate against `models.PaymentStatus` consts before calling repo
+- Valid statuses: `pending`, `completed`, `authorized`, `captured`, `failed`, `refunded`, `partially_refunded`
+
+**Consistency rules (follow address/category pattern):**
+- Return `[]*dto.X` for slices
+- Log errors with `slog.Error(...)` before returning
+- Constructor returns the interface type
+- Import alias: `userdto "commerce/api/internal/dto/user"`, `userrepo "commerce/internal/shared/repositories/user"` etc.
 
 ---
 
