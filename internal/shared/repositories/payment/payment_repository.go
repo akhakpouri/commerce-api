@@ -13,6 +13,7 @@ type PaymentRepositoryI interface {
 	GetByOrder(orderId uint) ([]*models.Payment, error)
 	Save(payment *models.Payment) error
 	Delete(id uint, hard bool) error
+	UpdateStatus(id uint, status string) error
 }
 
 type PaymentRepository struct {
@@ -52,6 +53,16 @@ func (r *PaymentRepository) Save(payment *models.Payment) error {
 		return r.db.Create(payment).Error
 	}
 	return r.db.Save(payment).Error
+}
+
+// UpdateStauts implements [PaymentRepositoryI].
+func (r *PaymentRepository) UpdateStatus(id uint, status string) error {
+	model, err := r.GetById(id)
+	if err != nil {
+		return err
+	}
+	model.Status = models.PaymentStatus(status)
+	return r.Save(model)
 }
 
 func (r *PaymentRepository) Delete(id uint, hard bool) error {
