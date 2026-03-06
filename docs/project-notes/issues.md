@@ -27,7 +27,7 @@ GORM mutates the pointer passed to `Save` in place — the generated primary key
 - [x] `services/product/product_service.go`
 - [x] `services/review/review_service.go`
 - [ ] `services/order/order_service.go`
-- [ ] `services/payment/payment_service.go`
+- [x] `services/payment/payment_service.go`
 
 **Repo additions required before services can be completed:**
 - `user_repository.go` — add `GetByEmail(email string) (*models.User, error)` (needed by `UserService.Authenticate`)
