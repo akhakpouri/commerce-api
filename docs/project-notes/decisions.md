@@ -133,10 +133,10 @@ api/internal/services/
 ├── product/product_service.go
 ├── category/category_service.go
 ├── review/review_service.go
+├── order-item/order_item_service.go
 ├── order/order_service.go
 └── payment/payment_service.go
 ```
-`OrderItem` has no dedicated service — managed within `OrderService`.
 
 **Pattern:** Each file defines an interface (`XxxServiceI`) and a concrete struct (`XxxService`) that implements it. Constructor takes a repository interface and returns the service interface: `func NewXxxService(repo XxxRepositoryI) XxxServiceI`. Services never hold `*gorm.DB` directly — see ADR-009.
 
@@ -196,6 +196,12 @@ Create(dto *paymentdto.Payment) (*paymentdto.Payment, error)
 UpdateStatus(id uint, status string) (*paymentdto.Payment, error)
 Delete(id uint) error
 ```
+
+**`ToModel()` must include `Id` via `Base{}`** — the repo's `Save` uses `Id == 0` to distinguish create vs update. If `ToModel` omits the `Id`, updates silently insert a new row instead. Always map it:
+```go
+Base: models.Base{Id: dto.Id},
+```
+**Action required:** Audit all DTO `ToModel()` functions — as of 2026-03-09, only `order-item` has been fixed; all others are missing this.
 
 **Notable implementation notes (service layer):**
 - `UserService.Authenticate` — fetch by email, call `model.CheckPassword(password)`, return error if false.
