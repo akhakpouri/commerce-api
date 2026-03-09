@@ -22,6 +22,9 @@ func FromModel(orderItem *models.OrderItem) *OrderItem {
 
 func ToModel(orderItem *OrderItem) *models.OrderItem {
 	return &models.OrderItem{
+		Base: models.Base{
+			Id: orderItem.Id,
+		},
 		OrderId:   orderItem.OrderId,
 		ProductId: orderItem.ProductId,
 		Quantity:  orderItem.Quantity,

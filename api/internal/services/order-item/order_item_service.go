@@ -30,7 +30,7 @@ func (o *OrderItemService) Delete(id uint, hard bool) error {
 func (o *OrderItemService) GetAllByOrder(orderId uint) ([]*dto.OrderItem, error) {
 	models, err := o.repo.GetAllByOrder(orderId)
 	if err != nil {
-		slog.Error("Exception occured retrieving items by order", "order-id", orderId, "error", err)
+		slog.Error("Exception occurred retrieving items by order", "order-id", orderId, "error", err)
 		return nil, err
 	}
 	orderItems := make([]*dto.OrderItem, 0, len(models))
@@ -44,7 +44,7 @@ func (o *OrderItemService) GetAllByOrder(orderId uint) ([]*dto.OrderItem, error)
 func (o *OrderItemService) GetById(id uint) (*dto.OrderItem, error) {
 	model, err := o.repo.GetById(id)
 	if err != nil {
-		slog.Error("Exception occured retrieving order-item by id", "id", id, "error", err)
+		slog.Error("Exception occurred retrieving order-item by id", "id", id, "error", err)
 		return nil, err
 	}
 	return dto.FromModel(model), nil
