@@ -3,8 +3,9 @@
 ## Issue — Repository + Service layer implementation (ADR-008, ADR-009)
 
 **Date:** 2026-02-27
+**Last updated:** 2026-03-09
 **Status:** In progress
-**Branch:** `main`
+**Branch:** `feature/issue-22`
 
 Implementing the repository layer (ADR-009) and service layer (ADR-008). See both ADRs in `decisions.md` for full interface signatures and implementation notes.
 
@@ -26,8 +27,9 @@ GORM mutates the pointer passed to `Save` in place — the generated primary key
 - [x] `services/user/user_service.go`
 - [x] `services/product/product_service.go`
 - [x] `services/review/review_service.go`
+- [x] `services/order-item/order_item_service.go`
 - [ ] `services/order/order_service.go`
-- [ ] `services/payment/payment_service.go`
+- [x] `services/payment/payment_service.go`
 
 **Repo additions required before services can be completed:**
 - `user_repository.go` — add `GetByEmail(email string) (*models.User, error)` (needed by `UserService.Authenticate`)

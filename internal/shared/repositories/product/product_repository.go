@@ -48,7 +48,10 @@ func (p *ProductRepository) GetAll() ([]*models.Product, error) {
 // GetAllByCategoryId implements [ProductRepositoryI].
 func (p *ProductRepository) GetAllByCategoryId(categoryId uint) ([]*models.Product, error) {
 	var products []*models.Product
-	if err := p.db.Where("category_id = ?", categoryId).Find(&products).Error; err != nil {
+	if err := p.db.
+		Joins("JOIN product_categories on product_categories.product_id = products.id").
+		Where("product_categories.category_id = ?", categoryId).
+		Find(&products).Error; err != nil {
 		return nil, err
 	}
 	return products, nil

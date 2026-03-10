@@ -2,13 +2,13 @@ package models
 
 type OrderItem struct {
 	Base
-	OrderId   uint    `gorm:"not null;foreignKey:order_id"`
-	ProductId uint    `gorm:"not null;foreignKey:product_id"`
+	OrderId   uint    `gorm:"not null;"`
+	ProductId uint    `gorm:"not null;"`
 	Quantity  int     `gorm:"not null"`
-	UnitPrice float64 `gorm:"not null"` 
+	UnitPrice float64 `gorm:"not null"`
 	TaxAmount float64 `gorm:"not null"`
-	Order     Order   `gorm:"foreignKey:order_id"`
-	Product   Product `gorm:"foreignKey:product_id"`
+	Order     Order   `gorm:"foreignKey:OrderId;constraint:OnDelete:CASCADE"`
+	Product   Product `gorm:"foreignKey:ProductId;constraint:OnDelete:CASCADE"`
 }
 
 func (oi *OrderItem) TableName() string {

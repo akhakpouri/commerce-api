@@ -4,8 +4,8 @@ import "time"
 
 type Payment struct {
 	Base
-	OrderId              uint           `gorm:"not null;foreignKey:order_id"`
-	Order                Order          `gorm:"foreignKey:order_id"`
+	OrderId              uint           `gorm:"not null;"`
+	Order                Order          `gorm:"foreignKey:OrderId;constraint:OnDelete:CASCADE"`
 	Amount               float64        `gorm:"not null"`
 	Status               PaymentStatus  `gorm:"type:varchar(20);not null;default:'pending'"`
 	GatewayTransactionId string         `gorm:"type:varchar(100);unique"`

@@ -95,6 +95,15 @@ Rather than extending `Order` with more payment fields, `Payment` is its own tab
 - No separate `PaymentMethod` model for MVP — gateway tokens (e.g., Stripe `pm_...`) stored as a string field on `Payment`.
 - Refunds handled via status + `RefundedAmount` on the existing `Payment` row (not separate rows) for MVP simplicity.
 - Actual card data never stored — delegated entirely to the payment gateway (PCI compliance).
+- `Payment` is NOT tied directly to `User` — user is reachable via `Payment → Order → UserId`. Adding a direct `UserId` FK would be redundant denormalization.
+- Payments are cascade-deleted when their parent `Order` is deleted. This simplifies the data model at the cost of full audit trail preservation — acceptable for MVP. Revisit if financial audit requirements tighten post-MVP.
+- `Payment.Order` uses `OnDelete:CASCADE` to match `Order.Payments` — both sides must agree to avoid constraint conflicts.
+
+**Follow-up (post-MVP):** Introduce a `PaymentMethod` model to support saved payment methods per user:
+- `PaymentMethod` belongs to `User` (stores gateway token, card brand, last 4, expiry)
+- `Payment.PaymentMethodId` — optional FK to `PaymentMethod` (nullable for one-off payments)
+- On user delete → CASCADE delete `PaymentMethod`; SET NULL on `Payment.PaymentMethodId`
+- This is the correct solution for "reuse a saved card on a new order" without adding `UserId` to `Payment`
 
 ---
 ## ADR-008 — Thin DTOs with service-layer mapping and business logic
@@ -133,10 +142,10 @@ api/internal/services/
 ├── product/product_service.go
 ├── category/category_service.go
 ├── review/review_service.go
+├── order-item/order_item_service.go
 ├── order/order_service.go
 └── payment/payment_service.go
 ```
-`OrderItem` has no dedicated service — managed within `OrderService`.
 
 **Pattern:** Each file defines an interface (`XxxServiceI`) and a concrete struct (`XxxService`) that implements it. Constructor takes a repository interface and returns the service interface: `func NewXxxService(repo XxxRepositoryI) XxxServiceI`. Services never hold `*gorm.DB` directly — see ADR-009.
 
@@ -196,6 +205,12 @@ Create(dto *paymentdto.Payment) (*paymentdto.Payment, error)
 UpdateStatus(id uint, status string) (*paymentdto.Payment, error)
 Delete(id uint) error
 ```
+
+**`ToModel()` must include `Id` via `Base{}`** — the repo's `Save` uses `Id == 0` to distinguish create vs update. If `ToModel` omits the `Id`, updates silently insert a new row instead. Always map it:
+```go
+Base: models.Base{Id: dto.Id},
+```
+**Action required:** Audit all DTO `ToModel()` functions — as of 2026-03-09, only `order-item` has been fixed; all others are missing this.
 
 **Notable implementation notes (service layer):**
 - `UserService.Authenticate` — fetch by email, call `model.CheckPassword(password)`, return error if false.
@@ -261,6 +276,35 @@ internal/shared/repositories/
 `UserService.Delete` soft-deletes only (`hard: false` hardcoded). Hard-delete is available at the repository level but intentionally not exposed through the service or any API endpoint.
 
 **Rationale:** User records are referenced by orders, reviews, and addresses. Hard-deleting a user would orphan those records. Soft-delete preserves referential integrity and audit history.
+
+---
+
+## ADR-012 — Cascade constraints on all foreign key relationships
+
+**Date:** 2026-03-10
+**Status:** Active — implemented 2026-03-10
+
+All models with foreign key relationships define explicit `OnDelete` constraints via GORM struct tags on association fields (not scalar FK columns). `foreignKey` tag values always use the Go struct field name (PascalCase) — GORM converts to snake_case for the DB column automatically.
+
+**Constraint rules per relationship:**
+
+| Parent | Child | Action |
+|--------|-------|--------|
+| `User` | `Address` | CASCADE |
+| `User` | `Order` | CASCADE |
+| `User` | `Review` | CASCADE |
+| `Order` | `OrderItem` | CASCADE |
+| `Order` | `Payment` | CASCADE (see ADR-007) |
+| `Product` | `Review` | CASCADE |
+| `Product` | `ProductCategory` | CASCADE |
+| `Category` | `ProductCategory` | CASCADE |
+| `Category` | `Category` (children) | CASCADE |
+| `Address` | `Order` (shipping/billing) | RESTRICT |
+
+**Key implementation notes:**
+- Constraints live on association fields only (e.g. `User User`, `Order Order`) — scalar FK fields (e.g. `UserId uint`) just have `gorm:"not null"`
+- `OnDelete:RESTRICT` on `Order.ShippingAddress` / `Order.BillingAddress` — prevents deleting an address that is still tied to an order
+- GORM `AutoMigrate` only applies constraints on table creation, not to existing tables — see BUG-015 for the workaround
 
 ---
 

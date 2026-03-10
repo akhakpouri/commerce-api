@@ -46,7 +46,7 @@ func (u *UserService) GetByEmail(email string) (*dto.User, error) {
 	model, err := u.repo.GetByEmail(email)
 	if err != nil {
 		slog.Error("Exception occured retrieving user by email", "email", email, "error", err)
-		return nil, err
+		return nil, errors.New("invalid credentials")
 	}
 	return dto.FromModel(model), nil
 }
