@@ -2,7 +2,7 @@ package models
 
 type Address struct {
 	Base
-	UserId     uint   `gorm:"not null;foreignKey:UserId;constraint:OnDelete:CASCADE"`
+	UserId     uint   `gorm:"not null;"`
 	Street     string `gorm:"type:text;size:255" sql:"type:text"`
 	City       string `gorm:"type:text;size:100" sql:"type:text"`
 	State      string `gorm:"type:text;size:50" sql:"type:text"`

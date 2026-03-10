@@ -96,7 +96,8 @@ Rather than extending `Order` with more payment fields, `Payment` is its own tab
 - Refunds handled via status + `RefundedAmount` on the existing `Payment` row (not separate rows) for MVP simplicity.
 - Actual card data never stored — delegated entirely to the payment gateway (PCI compliance).
 - `Payment` is NOT tied directly to `User` — user is reachable via `Payment → Order → UserId`. Adding a direct `UserId` FK would be redundant denormalization.
-- Payments are never hard-deleted — they are immutable financial records. User deletion should anonymize (null PII fields) rather than cascade-delete payments.
+- Payments are cascade-deleted when their parent `Order` is deleted. This simplifies the data model at the cost of full audit trail preservation — acceptable for MVP. Revisit if financial audit requirements tighten post-MVP.
+- `Payment.Order` uses `OnDelete:CASCADE` to match `Order.Payments` — both sides must agree to avoid constraint conflicts.
 
 **Follow-up (post-MVP):** Introduce a `PaymentMethod` model to support saved payment methods per user:
 - `PaymentMethod` belongs to `User` (stores gateway token, card brand, last 4, expiry)
@@ -281,24 +282,29 @@ internal/shared/repositories/
 ## ADR-012 — Cascade constraints on all foreign key relationships
 
 **Date:** 2026-03-10
-**Status:** Pending
+**Status:** Active — implemented 2026-03-10
 
-All models with foreign key relationships must define explicit `OnDelete` and `OnUpdate` cascade constraints via GORM struct tags. Without them, PostgreSQL enforces no referential action on related rows — deletes/updates on parent records can orphan children or be blocked by the DB.
+All models with foreign key relationships define explicit `OnDelete` constraints via GORM struct tags on association fields (not scalar FK columns). `foreignKey` tag values always use the Go struct field name (PascalCase) — GORM converts to snake_case for the DB column automatically.
 
-**Action required:** Audit all models in `internal/shared/models/` and add `constraint:OnUpdate:CASCADE,OnDelete:CASCADE` (or appropriate action) to all association tags.
+**Constraint rules per relationship:**
 
-**Models to audit:**
-- `Address` — FK to `User`
-- `Review` — FK to `User`, `Product`
-- `Order` — FK to `User`
-- `OrderItem` — FK to `Order`, `Product`
-- `Payment` — FK to `Order`
-- `ProductCategory` — FK to `Product`, `Category`
-- `Category` — self-referential FK to `Category` (ParentId)
+| Parent | Child | Action |
+|--------|-------|--------|
+| `User` | `Address` | CASCADE |
+| `User` | `Order` | CASCADE |
+| `User` | `Review` | CASCADE |
+| `Order` | `OrderItem` | CASCADE |
+| `Order` | `Payment` | CASCADE (see ADR-007) |
+| `Product` | `Review` | CASCADE |
+| `Product` | `ProductCategory` | CASCADE |
+| `Category` | `ProductCategory` | CASCADE |
+| `Category` | `Category` (children) | CASCADE |
+| `Address` | `Order` (shipping/billing) | RESTRICT |
 
-**Note:** Choice of cascade action (CASCADE vs SET NULL vs RESTRICT) should be made per relationship based on domain rules. For example, deleting a `Product` might SET NULL on `OrderItem.ProductId` to preserve order history, whereas deleting an `Order` should CASCADE to `OrderItem`.
-
-**Related:** `OrderService.Save` is deferred until this is resolved — atomically creating `Order` + `OrderItems` requires correct FK constraints to be in place first.
+**Key implementation notes:**
+- Constraints live on association fields only (e.g. `User User`, `Order Order`) — scalar FK fields (e.g. `UserId uint`) just have `gorm:"not null"`
+- `OnDelete:RESTRICT` on `Order.ShippingAddress` / `Order.BillingAddress` — prevents deleting an address that is still tied to an order
+- GORM `AutoMigrate` only applies constraints on table creation, not to existing tables — see BUG-015 for the workaround
 
 ---
 

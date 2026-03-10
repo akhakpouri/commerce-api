@@ -2,10 +2,10 @@ package models
 
 type ProductCategory struct {
 	Base
-	ProductId  uint     `gorm:"not null;foreignKey:ProductId;constraint:OnDelete:SET NULL"`
-	CategoryId uint     `gorm:"not null;foreignKey:CategoryId;constraint:OnDelete:SET NULL"`
-	Product    Product  `gorm:"foreignKey:ProductId"`
-	Category   Category `gorm:"foreignKey:CategoryId"`
+	ProductId  uint     `gorm:"not null;"`
+	CategoryId uint     `gorm:"not null;"`
+	Product    Product  `gorm:"foreignKey:ProductId;constraint:OnDelete:CASCADE"`
+	Category   Category `gorm:"foreignKey:CategoryId;constraint:OnDelete:CASCADE"`
 }
 
 func (ProductCategory) TableName() string {
