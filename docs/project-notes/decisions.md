@@ -95,6 +95,14 @@ Rather than extending `Order` with more payment fields, `Payment` is its own tab
 - No separate `PaymentMethod` model for MVP — gateway tokens (e.g., Stripe `pm_...`) stored as a string field on `Payment`.
 - Refunds handled via status + `RefundedAmount` on the existing `Payment` row (not separate rows) for MVP simplicity.
 - Actual card data never stored — delegated entirely to the payment gateway (PCI compliance).
+- `Payment` is NOT tied directly to `User` — user is reachable via `Payment → Order → UserId`. Adding a direct `UserId` FK would be redundant denormalization.
+- Payments are never hard-deleted — they are immutable financial records. User deletion should anonymize (null PII fields) rather than cascade-delete payments.
+
+**Follow-up (post-MVP):** Introduce a `PaymentMethod` model to support saved payment methods per user:
+- `PaymentMethod` belongs to `User` (stores gateway token, card brand, last 4, expiry)
+- `Payment.PaymentMethodId` — optional FK to `PaymentMethod` (nullable for one-off payments)
+- On user delete → CASCADE delete `PaymentMethod`; SET NULL on `Payment.PaymentMethodId`
+- This is the correct solution for "reuse a saved card on a new order" without adding `UserId` to `Payment`
 
 ---
 ## ADR-008 — Thin DTOs with service-layer mapping and business logic
@@ -267,6 +275,30 @@ internal/shared/repositories/
 `UserService.Delete` soft-deletes only (`hard: false` hardcoded). Hard-delete is available at the repository level but intentionally not exposed through the service or any API endpoint.
 
 **Rationale:** User records are referenced by orders, reviews, and addresses. Hard-deleting a user would orphan those records. Soft-delete preserves referential integrity and audit history.
+
+---
+
+## ADR-012 — Cascade constraints on all foreign key relationships
+
+**Date:** 2026-03-10
+**Status:** Pending
+
+All models with foreign key relationships must define explicit `OnDelete` and `OnUpdate` cascade constraints via GORM struct tags. Without them, PostgreSQL enforces no referential action on related rows — deletes/updates on parent records can orphan children or be blocked by the DB.
+
+**Action required:** Audit all models in `internal/shared/models/` and add `constraint:OnUpdate:CASCADE,OnDelete:CASCADE` (or appropriate action) to all association tags.
+
+**Models to audit:**
+- `Address` — FK to `User`
+- `Review` — FK to `User`, `Product`
+- `Order` — FK to `User`
+- `OrderItem` — FK to `Order`, `Product`
+- `Payment` — FK to `Order`
+- `ProductCategory` — FK to `Product`, `Category`
+- `Category` — self-referential FK to `Category` (ParentId)
+
+**Note:** Choice of cascade action (CASCADE vs SET NULL vs RESTRICT) should be made per relationship based on domain rules. For example, deleting a `Product` might SET NULL on `OrderItem.ProductId` to preserve order history, whereas deleting an `Order` should CASCADE to `OrderItem`.
+
+**Related:** `OrderService.Save` is deferred until this is resolved — atomically creating `Order` + `OrderItems` requires correct FK constraints to be in place first.
 
 ---
 

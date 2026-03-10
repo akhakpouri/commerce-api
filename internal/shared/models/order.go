@@ -2,7 +2,7 @@ package models
 
 type Order struct {
 	Base
-	UserId            uint        `gorm:"not null;foreignKey:user_id"`
+	UserId            uint        `gorm:"not null;foreignKey:user_id;constraint:OnDelete:CASCADE"`
 	SubTotalAmount    float64     `gorm:"not null"`
 	TaxAmount         float64     `gorm:"not null"`
 	TotalAmount       float64     `gorm:"not null"`
@@ -13,8 +13,8 @@ type Order struct {
 	ShippingAddressId uint        `gorm:"not null"`
 	BillingAddress    Address     `gorm:"foreignKey:billing_address_id"`
 	BillingAddressId  uint        `gorm:"not null"`
-	OrderItems        []OrderItem `gorm:"foreignKey:order_id"`
-	Payments          []Payment   `gorm:"foreignKey:order_id"`
+	OrderItems        []OrderItem `gorm:"foreignKey:order_id;constraint:OnDelete:CASCADE"`
+	Payments          []Payment   `gorm:"foreignKey:order_id;constraint:OnDelete:CASCADE"`
 }
 
 type OrderStatus string

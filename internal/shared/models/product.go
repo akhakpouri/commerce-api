@@ -9,8 +9,8 @@ type Product struct {
 	Stock             int               `gorm:"default:0"`
 	IsActive          bool              `gorm:"default:true"`
 	IsFeatured        bool              `gorm:"default:false"`
-	ProductCategories []ProductCategory `gorm:"foreignKey:ProductId"`
-	Reviews           []Review          `gorm:"foreignKey:ProductId"`
+	ProductCategories []ProductCategory `gorm:"foreignKey:product_id;constraint:OnDelete:CASCADE"`
+	Reviews           []Review          `gorm:"foreignKey:product_id;constraint:OnDelete:CASCADE"`
 }
 
 func (Product) TableName() string {

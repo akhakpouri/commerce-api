@@ -10,8 +10,10 @@ import (
 type OrderRepositoryI interface {
 	GetById(id uint) (*models.Order, error)
 	GetAll() ([]*models.Order, error)
+	GetAllByUserId(userId uint) ([]*models.Order, error)
 	Save(order *models.Order) error
 	Delete(id uint, hard bool) error
+	UpdateStatus(id uint, status string) error
 }
 
 type OrderRepository struct {
@@ -44,6 +46,18 @@ func (o *OrderRepository) GetAll() ([]*models.Order, error) {
 	return orders, nil
 }
 
+// GetAllByUserId implements [OrderRepositoryI].
+func (o *OrderRepository) GetAllByUserId(userId uint) ([]*models.Order, error) {
+	var orders []*models.Order
+	if err := o.db.Where("user_id = ?", userId).
+		Order("created_date desc").
+		Find(&orders).
+		Error; err != nil {
+		return nil, err
+	}
+	return orders, nil
+}
+
 // GetById implements [OrderRepositoryI].
 func (o *OrderRepository) GetById(id uint) (*models.Order, error) {
 	var order models.Order
@@ -59,4 +73,12 @@ func (o *OrderRepository) Save(order *models.Order) error {
 		return o.db.Create(order).Error
 	}
 	return o.db.Save(order).Error
+}
+
+// UpdateStatus implements [OrderRepositoryI].
+func (o *OrderRepository) UpdateStatus(id uint, status string) error {
+	return o.db.
+		Model(&models.Order{}).
+		Where("id = ?", id).
+		Update("order_status", status).Error
 }
