@@ -233,6 +233,32 @@ r.db.First(&category, id)
 
 ---
 
+## BUG-015 — GORM `AutoMigrate` does not add constraints to existing tables
+
+**Discovered:** 2026-03-10
+**Status:** Known limitation
+
+### Description
+GORM's `AutoMigrate` only creates FK constraints when a table is first created. Adding `constraint:OnDelete:CASCADE` (or any constraint) to a model tag has no effect on tables that already exist in the database — the constraint is silently skipped.
+
+### Workaround (dev)
+Drop and recreate the schema, then re-run migrations:
+```sql
+DROP SCHEMA commerce CASCADE;
+CREATE SCHEMA commerce AUTHORIZATION commerce;
+```
+
+### Fix (staging/prod)
+Add constraints manually via `ALTER TABLE`:
+```sql
+ALTER TABLE commerce.order_items
+  ADD CONSTRAINT fk_order_items_order
+  FOREIGN KEY (order_id) REFERENCES commerce.orders(id) ON DELETE CASCADE;
+```
+Repeat for each relationship. A dedicated SQL migration script should be maintained for non-dev environments.
+
+---
+
 ## BUG-014 — `CategoryRepository.Delete` soft branch performs a hard delete
 
 **File:** `internal/shared/repositories/category/category_repository.go`
