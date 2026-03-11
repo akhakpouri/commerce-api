@@ -25,6 +25,8 @@ Thin data containers for API payloads. One sub-package per domain under `api/int
 - `ToModel()` — method on request DTOs, returns a model
 - `FromModel(...)` — standalone function on response DTOs, accepts a model
 
+**Exception:** `dto/tax/tax.go` has no backing model — it is a plain data container used only by `TaxService`. No `ToModel()`/`FromModel()` required.
+
 **Structure:**
 ```
 dto/
@@ -35,7 +37,8 @@ dto/
 ├── review/review.go
 ├── order/order.go
 ├── order-item/order_item.go
-└── payment/payment.go
+├── payment/payment.go
+└── tax/tax.go
 ```
 
 ---
@@ -58,6 +61,8 @@ func NewXxxService(repo xrepo.XxxRepositoryI) XxxServiceI {
 }
 ```
 
+**Exception:** `TaxService` has no repository — it operates entirely on an in-memory map. Its constructor takes no parameters: `func NewTaxService() TaxServiceI`.
+
 **Import aliasing** — service, repo, and DTO packages share the same domain name. Alias at the import site:
 ```go
 import (
@@ -74,16 +79,18 @@ services/
 ├── product/product_service.go
 ├── category/category_service.go
 ├── review/review_service.go
+├── order-item/order_item_service.go
 ├── order/order_service.go
-└── payment/payment_service.go
+├── payment/payment_service.go
+└── tax/tax_service.go
 ```
 
-**Notable implementation rules (from ADR-008):**
+**Notable implementation rules (from ADR-008, ADR-013):**
 - `UserService.Authenticate` — fetch by email, call `model.CheckPassword(password)`, return error if false
 - `AddressService.SetDefault` — clear existing default for user, then set new one
-- `OrderService.Create` — must create `Order` + all `OrderItems` atomically in a single transaction
+- `OrderService.Save` — atomicity is achieved via GORM's association create: pass the full `models.Order` with nested `[]OrderItem` to `repo.Save`; GORM inserts both in a single transaction. No manual transaction needed.
+- `OrderService.Save` — before persisting, compute `SubTotalAmount = Σ (quantity × unit_price)`, call `TaxService.Calculate` for `TaxAmount`, set `TotalAmount = SubTotalAmount + TaxAmount`. Inject `TaxServiceI` alongside `OrderRepositoryI`.
 - `OrderService.UpdateStatus` / `PaymentService.UpdateStatus` — validate input string against model enum constants before calling repo
-- `OrderService` injects both `OrderRepositoryI` and `OrderItemRepositoryI`
 
 ---
 
@@ -93,5 +100,6 @@ services/
 | ADR-004 | HTTP framework not yet chosen |
 | ADR-008 | Thin DTOs with service-layer mapping and business logic |
 | ADR-009 | Repository pattern for data access |
+| ADR-013 | Order amount calculation strategy (SubTotal, Tax, Total) |
 
 Full details in `docs/project-notes/decisions.md`.

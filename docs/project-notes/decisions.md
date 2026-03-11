@@ -308,6 +308,44 @@ All models with foreign key relationships define explicit `OnDelete` constraints
 
 ---
 
+## ADR-013 — Order amount calculation strategy
+
+**Date:** 2026-03-11
+**Status:** Active — pending implementation
+
+Order amounts are split into three fields on the `Order` model: `SubTotalAmount`, `TaxAmount`, `TotalAmount`. Each is calculated differently.
+
+| Field | Source | Where |
+|-------|--------|-------|
+| `SubTotalAmount` | `Σ (quantity × unit_price)` across all `OrderItems` | `OrderService.Save` |
+| `TaxAmount` | `SubTotalAmount × rate` for the given state | `TaxService` (injected into `OrderService`) |
+| `TotalAmount` | `SubTotalAmount + TaxAmount` | `OrderService.Save` |
+
+**`TotalAmount` — service vs. DB generated column:**
+A PostgreSQL `GENERATED ALWAYS AS (sub_total_amount + tax_amount) STORED` column was considered but rejected:
+- GORM `AutoMigrate` does not add generated columns — requires a manual migration
+- GORM needs special read-only tags (`<-:false`) to avoid writing the column
+- The consistency benefit is minimal since `OrderService.Save` is the only write path
+- One line of service code is clearer than schema complexity
+
+Decision: calculate `TotalAmount` in the service layer.
+
+**`TaxService` — rate source:**
+- An external tax rate API was considered and rejected for MVP: adds a network dependency, latency, and a failure mode on every order creation
+- Tax rates are stored as an in-memory `map[string]float64` (state abbreviation → rate), loaded at startup from a config file or hardcoded constants
+- `TaxService` is behind an interface — swapping to an external source later is a one-file change
+
+**`TaxService` interface:**
+```go
+type TaxServiceI interface {
+    Calculate(subTotal float64, state string) (float64, error)
+}
+```
+
+**Order DTO update required:** add `SubTotalAmount` and `TaxAmount` fields; `ToModel` must map them. `TotalAmount` remains on both DTO and model.
+
+---
+
 ## ADR-010 — Default sort order on all repository `Find` methods
 
 **Date:** 2026-03-04

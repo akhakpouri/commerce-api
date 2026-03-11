@@ -6,7 +6,6 @@ type OrderItem struct {
 	ProductId uint    `gorm:"not null;"`
 	Quantity  int     `gorm:"not null"`
 	UnitPrice float64 `gorm:"not null"`
-	TaxAmount float64 `gorm:"not null"`
 	Order     Order   `gorm:"foreignKey:OrderId;constraint:OnDelete:CASCADE"`
 	Product   Product `gorm:"foreignKey:ProductId;constraint:OnDelete:CASCADE"`
 }
