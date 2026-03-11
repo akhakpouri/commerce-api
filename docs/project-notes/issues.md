@@ -1,5 +1,31 @@
 # Work Log
 
+## Issue #66 — Compute SubTotal, Tax, and Total in OrderService.Save
+
+**Date:** 2026-03-11
+**Status:** Pending
+**Branch:** TBD
+**Depends on:** #65
+
+- [ ] Add `SubTotalAmount`, `TaxAmount`, `State` to `Order` DTO; update `ToModel`/`FromModel`
+- [ ] Inject `TaxServiceI` into `OrderService` constructor
+- [ ] Compute `SubTotalAmount`, call `TaxService.Calculate`, set `TotalAmount` in `Save`
+
+---
+
+## Issue #65 — Implement TaxService
+
+**Date:** 2026-03-11
+**Status:** Pending
+**Branch:** TBD
+
+- [ ] Create `api/internal/services/tax/tax_service.go`
+- [ ] `TaxServiceI` interface with `Calculate(subTotal float64, state string) (float64, error)`
+- [ ] In-memory `map[string]float64` implementation; error on unknown state
+- [ ] Constructor accepts rate map as parameter
+
+---
+
 ## Issue — Repository + Service layer implementation (ADR-008, ADR-009)
 
 **Date:** 2026-02-27
