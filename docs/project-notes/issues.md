@@ -3,13 +3,13 @@
 ## Issue #66 — Compute SubTotal, Tax, and Total in OrderService.Save
 
 **Date:** 2026-03-11
-**Status:** Pending
-**Branch:** TBD
-**Depends on:** #65
+**Status:** Done
 
-- [ ] Add `SubTotalAmount`, `TaxAmount`, `State` to `Order` DTO; update `ToModel`/`FromModel`
-- [ ] Inject `TaxServiceI` into `OrderService` constructor
-- [ ] Compute `SubTotalAmount`, call `TaxService.Calculate`, set `TotalAmount` in `Save`
+- [x] Add `SubTotalAmount`, `TaxAmount`, `BillingState` to `Order` DTO; updated `ToModel`/`FromModel`
+- [x] Inject `TaxServiceI` into `OrderService` constructor
+- [x] Compute `SubTotalAmount`, call `TaxService.Calculate`, set `TotalAmount` in `Save`
+- [x] `calculateTax` returns `(float64, error)` — no pointer, error propagated in `Save`
+- [x] `GetById` in order repo preloads `BillingAddress` so `BillingState` is populated
 
 ---
 
