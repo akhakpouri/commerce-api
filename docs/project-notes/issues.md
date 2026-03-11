@@ -16,13 +16,13 @@
 ## Issue #65 — Implement TaxService
 
 **Date:** 2026-03-11
-**Status:** Pending
-**Branch:** TBD
+**Status:** Done
 
-- [ ] Create `api/internal/services/tax/tax_service.go`
-- [ ] `TaxServiceI` interface with `Calculate(subTotal float64, state string) (float64, error)`
-- [ ] In-memory `map[string]float64` implementation; error on unknown state
-- [ ] Constructor accepts rate map as parameter
+- [x] Create `api/internal/services/tax/tax_service.go`
+- [x] `TaxServiceI` interface with `Calculate(amount float64, state string) (*float64, error)` and `GetStates() []string`
+- [x] In-memory `map[string]dto.Tax` implementation; error on unknown state
+- [x] `float64` throughout for precision
+- [x] `GetStates` returns sorted keys
 
 ---
 
