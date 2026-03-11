@@ -49,7 +49,9 @@ func (o *OrderRepository) GetAll() ([]*models.Order, error) {
 // GetAllByUserId implements [OrderRepositoryI].
 func (o *OrderRepository) GetAllByUserId(userId uint) ([]*models.Order, error) {
 	var orders []*models.Order
-	if err := o.db.Where("user_id = ?", userId).
+	if err := o.db.
+		Preload("BillingAddress").
+		Where("user_id = ?", userId).
 		Order("created_date desc").
 		Find(&orders).
 		Error; err != nil {
@@ -61,7 +63,7 @@ func (o *OrderRepository) GetAllByUserId(userId uint) ([]*models.Order, error) {
 // GetById implements [OrderRepositoryI].
 func (o *OrderRepository) GetById(id uint) (*models.Order, error) {
 	var order models.Order
-	if err := o.db.First(&order, id).Error; err != nil {
+	if err := o.db.Preload("BillingAddress").First(&order, id).Error; err != nil {
 		return nil, err
 	}
 	return &order, nil

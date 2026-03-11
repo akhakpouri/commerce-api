@@ -2,7 +2,8 @@ package order
 
 import (
 	dto "commerce/api/internal/dto/order"
-	"commerce/internal/shared/models"
+	tax_service "commerce/api/internal/services/tax"
+	models "commerce/internal/shared/models"
 	repo "commerce/internal/shared/repositories/order"
 	"fmt"
 	"log/slog"
@@ -17,11 +18,15 @@ type OrderServiceI interface {
 }
 
 type OrderService struct {
-	repo repo.OrderRepositoryI
+	repo       repo.OrderRepositoryI
+	taxService tax_service.TaxServiceI
 }
 
-func NewOrderService(repo repo.OrderRepositoryI) OrderServiceI {
-	return &OrderService{repo: repo}
+func NewOrderService(repo repo.OrderRepositoryI, taxService tax_service.TaxServiceI) OrderServiceI {
+	return &OrderService{
+		repo:       repo,
+		taxService: taxService,
+	}
 }
 
 // Delete implements [OrderServiceI].
@@ -55,6 +60,13 @@ func (o *OrderService) GetByUserId(userId uint) ([]*dto.Order, error) {
 
 // Save implements [OrderServiceI].
 func (o *OrderService) Save(order dto.Order) error {
+	order.SubTotalAmount = calculateSubTotalAmount(&order)
+	tax, err := o.calculateTax(&order)
+	if err != nil {
+		return err
+	}
+	order.TaxAmount = tax
+	order.TotalAmount = calculateTotalAmount(&order)
 	model := dto.ToModel(&order)
 	return o.repo.Save(model)
 }
@@ -77,4 +89,26 @@ func isOrderStatusValid(status string) bool {
 	}
 	_, ok := validStatuses[models.OrderStatus(status)]
 	return ok
+}
+
+func (o *OrderService) calculateTax(order *dto.Order) (float64, error) {
+	tax, err := o.taxService.Calculate(order.SubTotalAmount, order.BillingState)
+	if err != nil {
+		slog.Error("Exception occured when calculating order tax.", "order-id", order.Id, "state", order.BillingState)
+		return 0, err
+	}
+	return *tax, nil
+}
+
+func calculateTotalAmount(order *dto.Order) float64 {
+	return order.SubTotalAmount + order.TaxAmount
+}
+
+func calculateSubTotalAmount(o *dto.Order) float64 {
+	total := 0.00
+
+	for _, item := range o.OrderItems {
+		total += (item.UnitPrice * float64(item.Quantity))
+	}
+	return total
 }

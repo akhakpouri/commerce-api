@@ -6,11 +6,14 @@ import (
 )
 
 type Order struct {
-	Id          uint                  `json:"id"`
-	UserId      uint                  `json:"user_id"`
-	TotalAmount float64               `json:"total_amount"`
-	Status      string                `json:"status"`
-	OrderItems  []orderitem.OrderItem `json:"order_items,omitempty"`
+	Id             uint                  `json:"id"`
+	UserId         uint                  `json:"user_id"`
+	Status         string                `json:"status"`
+	TaxAmount      float64               `json:"tax_amount"`
+	TotalAmount    float64               `json:"total_amount"`
+	SubTotalAmount float64               `json:"sub_total_amount"`
+	BillingState   string                `json:"billing_state"`
+	OrderItems     []orderitem.OrderItem `json:"order_items,omitempty"`
 }
 
 func FromModel(order *models.Order) *Order {
@@ -20,11 +23,14 @@ func FromModel(order *models.Order) *Order {
 	}
 
 	return &Order{
-		Id:          order.Id,
-		UserId:      order.UserId,
-		TotalAmount: order.TotalAmount,
-		Status:      string(order.Status),
-		OrderItems:  orderItems,
+		Id:             order.Id,
+		UserId:         order.UserId,
+		TotalAmount:    order.TotalAmount,
+		TaxAmount:      order.TaxAmount,
+		Status:         string(order.Status),
+		OrderItems:     orderItems,
+		SubTotalAmount: order.SubTotalAmount,
+		BillingState:   order.BillingAddress.State,
 	}
 }
 
@@ -35,9 +41,11 @@ func ToModel(order *Order) *models.Order {
 	}
 
 	return &models.Order{
-		UserId:      order.UserId,
-		TotalAmount: order.TotalAmount,
-		Status:      models.OrderStatus(order.Status),
-		OrderItems:  orderItems,
+		UserId:         order.UserId,
+		TotalAmount:    order.TotalAmount,
+		TaxAmount:      order.TaxAmount,
+		Status:         models.OrderStatus(order.Status),
+		SubTotalAmount: order.SubTotalAmount,
+		OrderItems:     orderItems,
 	}
 }
