@@ -62,7 +62,7 @@ Config file: `utils/configs/config.json` — gitignored (contains credentials). 
 ## ADR-006 — Shell script installation with compile-time config embedding
 
 **Date:** 2026-02-26
-**Status:** Active
+**Status:** Closed
 
 `utils/install.sh` is the chosen installation mechanism for the migration binary. It builds the binary with `configs/config.json` embedded at compile time and installs it to `$GOPATH/bin/commerce-tools/` alongside a copy of the `configs/` directory.
 
@@ -109,7 +109,7 @@ Rather than extending `Order` with more payment fields, `Payment` is its own tab
 ## ADR-008 — Thin DTOs with service-layer mapping and business logic
 
 **Date:** 2026-02-26
-**Status:** Active — DTOs done; service layer in progress 2026-02-27
+**Status:** Done
 
 API payloads are represented as DTOs (request/response structs) living in `api/internal/dto/`. DTOs are plain data containers — json tags, validation tags, and mapping methods only. Business logic lives exclusively in `api/internal/services/`.
 
@@ -223,7 +223,7 @@ Base: models.Base{Id: dto.Id},
 ## ADR-009 — Repository pattern for data access
 
 **Date:** 2026-02-27
-**Status:** Active — pending implementation
+**Status:** Done
 
 A repository layer is introduced between services and GORM. Services never hold `*gorm.DB` directly; they depend on repository interfaces.
 
@@ -282,7 +282,7 @@ internal/shared/repositories/
 ## ADR-012 — Cascade constraints on all foreign key relationships
 
 **Date:** 2026-03-10
-**Status:** Active — implemented 2026-03-10
+**Status:** Closed — verified 2026-03-12
 
 All models with foreign key relationships define explicit `OnDelete` constraints via GORM struct tags on association fields (not scalar FK columns). `foreignKey` tag values always use the Go struct field name (PascalCase) — GORM converts to snake_case for the DB column automatically.
 
@@ -311,7 +311,7 @@ All models with foreign key relationships define explicit `OnDelete` constraints
 ## ADR-013 — Order amount calculation strategy
 
 **Date:** 2026-03-11
-**Status:** Active — pending implementation
+**Status:** Closed — verified 2026-03-12
 
 Order amounts are split into three fields on the `Order` model: `SubTotalAmount`, `TaxAmount`, `TotalAmount`. Each is calculated differently.
 
@@ -343,6 +343,47 @@ type TaxServiceI interface {
 ```
 
 **Order DTO update required:** add `SubTotalAmount` and `TaxAmount` fields; `ToModel` must map them. `TotalAmount` remains on both DTO and model.
+
+---
+
+## ADR-014 — Unit testing strategy for the service layer
+
+**Date:** 2026-03-12
+**Status:** Active — pending implementation
+
+Unit tests cover the service layer only. Repository and DTO layers are not tested directly — repos are exercised through integration tests (future); DTOs are thin mappings with no logic to test.
+
+**Mock library:** `github.com/stretchr/testify` (`testify/mock` + `testify/assert`/`require`). Added to `api/go.mod`. Hand-written mocks only — no code generation.
+
+**Additional dependency:** `golang.org/x/crypto` added to `api/go.mod` to support bcrypt hash generation in `UserService` tests (needed to pre-populate `models.User.Password` so `CheckPassword` works without GORM hooks).
+
+**Test file locations:** Co-located with each service, same package (white-box):
+```
+api/internal/services/
+├── tax/tax_service_test.go
+├── order/order_service_test.go
+├── user/user_service_test.go
+└── payment/payment_service_test.go
+```
+
+**Mock structure:** Each test file defines local mock structs by embedding `mock.Mock` and implementing the relevant repository/service interface. One mock per interface, one method stub per interface method.
+
+**Mock placement:** Mocks live in the test file of the consumer, not next to the interface they implement. `MockOrderRepo` belongs in `order_service_test.go`, not in `internal/shared/repositories/order/`. Mocks are a testing artifact of the consumer — the repository package has no need for a mock of itself.
+
+The only exception: if the same mock is needed across multiple test packages, extract it to `api/internal/mocks/`. That is not currently the case.
+
+**Test suite pattern:** Use `testify/suite` for services with multiple tests that share mock setup (`OrderService`, `UserService`). Define mocks as suite fields and reset them in `SetupTest()` — this gives every test a clean mock with no leftover state. Use plain top-level functions for simpler cases (`TaxService`, `PaymentService`).
+
+**Coverage targets per service:**
+
+| Service | Key cases |
+|---------|-----------|
+| `TaxService` | `Calculate`: valid state, zero-tax state (AK), invalid state, zero amount; `GetStates`: sorted, count = 51 |
+| `OrderService` | `Save`: correct SubTotal/Tax/Total written to repo, empty items, tax service error aborts save; `UpdateStatus`: all four valid statuses pass through, invalid status rejected before repo call |
+| `UserService` | `Authenticate`: valid credentials, wrong password, user not found; `GetById`: found and not found; `Delete`: always calls repo with `hard=false` |
+| `PaymentService` | `UpdateStatus`: all seven valid statuses pass through, invalid status rejected before repo call, repo error propagates |
+
+**User test setup pattern:** Generate a bcrypt hash at `bcrypt.MinCost` (faster than `DefaultCost`) in a test helper, pre-populate `models.User.Password`, then assert `CheckPassword` behaves correctly — no GORM hooks involved.
 
 ---
 
