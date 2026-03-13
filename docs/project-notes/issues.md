@@ -1,5 +1,21 @@
 # Work Log
 
+## Issue #69–#73 — Service layer unit tests (ADR-014)
+
+**Date:** 2026-03-12
+**Status:** Open
+**Branch:** TBD
+
+- [ ] #69 — Add test dependencies to `api/go.mod` (testify, bcrypt)
+- [ ] #70 — Unit tests for `TaxService`
+- [ ] #71 — Unit tests for `OrderService`
+- [ ] #72 — Unit tests for `UserService`
+- [ ] #73 — Unit tests for `PaymentService`
+
+#69 must be completed before any test file work begins. See ADR-014 in `decisions.md` for mock strategy and full test case matrix.
+
+---
+
 ## Issue #66 — Compute SubTotal, Tax, and Total in OrderService.Save
 
 **Date:** 2026-03-11
@@ -29,8 +45,8 @@
 ## Issue — Repository + Service layer implementation (ADR-008, ADR-009)
 
 **Date:** 2026-02-27
-**Last updated:** 2026-03-09
-**Status:** In progress
+**Last updated:** 2026-03-12
+**Status:** Done
 **Branch:** `feature/issue-22`
 
 Implementing the repository layer (ADR-009) and service layer (ADR-008). See both ADRs in `decisions.md` for full interface signatures and implementation notes.
@@ -54,7 +70,7 @@ GORM mutates the pointer passed to `Save` in place — the generated primary key
 - [x] `services/product/product_service.go`
 - [x] `services/review/review_service.go`
 - [x] `services/order-item/order_item_service.go`
-- [ ] `services/order/order_service.go`
+- [x] `services/order/order_service.go`
 - [x] `services/payment/payment_service.go`
 
 **Repo additions required before services can be completed:**
