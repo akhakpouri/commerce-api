@@ -36,3 +36,28 @@ func TestAuthenticate(t *testing.T) {
 	assert.Equal(t, "Jon", user.FirstName)
 	assert.Equal(t, "Doe", user.LastName)
 }
+
+func TestInvalidAuthentication(t *testing.T) {
+	password, wrong_password := "hashed_password", "wrong_password"
+	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)
+	ctl := gomock.NewController(t)
+	defer ctl.Finish()
+	mockRepo := NewMockUserRepositoryI(ctl)
+	mockRepo.EXPECT().GetByEmail("jon.doe@example.com").Return(&models.User{
+		Base: models.Base{
+			Id:          1,
+			CreatedDate: time.Now(),
+			UpdatedDate: time.Now(),
+		},
+		Email:     "jon.doe@example.com",
+		Password:  string(hashedPassword),
+		FirstName: "Jon",
+		LastName:  "Doe",
+	}, nil)
+
+	svc := NewUserService(mockRepo)
+	user, err := svc.Authenticate("jon.doe@example.com", wrong_password)
+	assert.Error(t, err)
+	assert.Nil(t, user)
+
+}
